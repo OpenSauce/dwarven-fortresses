@@ -2,7 +2,10 @@ module github.com/tomknightdev/ebiten-mouse-test
 
 go 1.18
 
-require github.com/hajimehoshi/ebiten/v2 v2.3.2
+require (
+	github.com/hajimehoshi/ebiten/v2 v2.3.2
+	github.com/solarlune/paths v0.0.0-20210502000212-9a0a8bceed77
+)
 
 require (
 	github.com/go-gl/glfw/v3.3/glfw v0.0.0-20220320163800-277f93cfa958 // indirect
