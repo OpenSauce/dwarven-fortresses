@@ -13,8 +13,8 @@ import (
 )
 
 const (
-	worldWidth  int = 30
-	worldHeight int = 30
+	worldWidth  int = 40
+	worldHeight int = 40
 	cellWidth   int = 8
 	cellHeight  int = 8
 )
@@ -29,6 +29,7 @@ type Game struct {
 	// tileMap  []*Tile
 	// tileSize int
 	gameMap *GameMap
+	units   []*Unit
 }
 
 func init() {
@@ -53,6 +54,11 @@ func (g *Game) Update() error {
 		if t != nil {
 			t.Walkable = !t.Walkable
 		}
+	}
+
+	count := len(g.units)
+	for i := 0; i < count; i++ {
+		g.units[i].Update()
 	}
 
 	return nil
@@ -81,6 +87,11 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		}
 	}
 
+	count := len(g.units)
+	for i := 0; i < count; i++ {
+		g.units[i].Draw(screen)
+	}
+
 	// for _, t := range g.gameMap.grid.AllCells() {
 	// 	var i *ebiten.Image
 
@@ -103,9 +114,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
 	return 512, 384
-	w, h := ebiten.WindowSize()
+	// w, h := ebiten.WindowSize()
 
-	return w / 2, h / 2
+	// return w / 2, h / 2
 }
 
 func main() {
@@ -113,6 +124,10 @@ func main() {
 		// tileMap:  []*Tile{},
 		// tileSize: 10,
 		gameMap: NewGameMap(worldWidth, worldHeight, cellWidth, cellWidth),
+	}
+
+	for i := 0; i < 100; i++ {
+		game.units = append(game.units, NewUnit(1, 1, game.gameMap))
 	}
 
 	// count := 0
