@@ -13,8 +13,8 @@ import (
 )
 
 const (
-	worldWidth  int = 40
-	worldHeight int = 40
+	worldWidth  int = 50
+	worldHeight int = 50
 	cellWidth   int = 8
 	cellHeight  int = 8
 )
@@ -113,10 +113,10 @@ func (g *Game) Draw(screen *ebiten.Image) {
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
-	return 512, 384
-	// w, h := ebiten.WindowSize()
+	// return 512, 384
+	w, h := ebiten.WindowSize()
 
-	// return w / 2, h / 2
+	return w / 2, h / 2
 }
 
 func main() {
@@ -126,7 +126,7 @@ func main() {
 		gameMap: NewGameMap(worldWidth, worldHeight, cellWidth, cellWidth),
 	}
 
-	for i := 0; i < 100; i++ {
+	for i := 0; i < 200; i++ {
 		game.units = append(game.units, NewUnit(1, 1, game.gameMap))
 	}
 

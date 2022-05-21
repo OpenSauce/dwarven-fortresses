@@ -31,7 +31,7 @@ func NewUnit(startX, startY int, pf Pathfinder) *Unit {
 		startX,
 		startY,
 		pf,
-		15,
+		10,
 		0,
 		tilesImage.SubImage(image.Rectangle{
 			Min: image.Pt(2*cellWidth, 3*cellHeight),
@@ -50,7 +50,8 @@ func (u *Unit) Update() error {
 	}
 	u.CurrentTurnTime = 0
 
-	if u.XTar == u.XPos && u.YTar == u.YPos || u.currentPath == nil {
+	if (u.XTar == u.XPos && u.YTar == u.YPos) || u.currentPath == nil {
+		u.CurrentTurnTime -= 50
 		u.getNewPos()
 		u.currentPath = u.Pathfinder.GetPath(u.XPos, u.YPos, u.XTar, u.YTar)
 
@@ -67,6 +68,8 @@ func (u *Unit) Update() error {
 			if u.currentPath == nil {
 				return nil
 			}
+
+			next = u.currentPath.Next()
 		}
 
 		u.XPos = next.X

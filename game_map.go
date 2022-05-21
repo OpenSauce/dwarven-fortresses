@@ -1,6 +1,8 @@
 package main
 
 import (
+	"math/rand"
+
 	"github.com/solarlune/paths"
 )
 
@@ -26,6 +28,10 @@ func NewGameMap(gridWidth, gridHeight, cellWidth, cellHeight int) *GameMap {
 		if c.X == 0 || c.Y == 0 || c.X == gridWidth-1 || c.Y == gridHeight-1 {
 			c.Walkable = false
 		} else {
+			r := rand.Intn(100)
+			if r > 90 {
+				c.Walkable = false
+			}
 			// Take the map centre, deduct current tile from it, the lower the number the closer to the centre
 			// xCost := math.Abs(float64(mapCentre - c.X))
 			// yCost := math.Abs(float64(mapCentre - c.Y))
