@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"image"
 	"image/png"
 	"log"
@@ -9,12 +10,13 @@ import (
 	_ "embed"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
 const (
-	worldWidth  int = 50
-	worldHeight int = 50
+	worldWidth  int = 200
+	worldHeight int = 200
 	cellWidth   int = 8
 	cellHeight  int = 8
 )
@@ -58,7 +60,8 @@ func (g *Game) Update() error {
 
 	count := len(g.units)
 	for i := 0; i < count; i++ {
-		g.units[i].Update()
+		g.units[i].Running = true
+		// g.units[i].Update()
 	}
 
 	return nil
@@ -68,7 +71,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	var i *ebiten.Image
 
 	for x := 0; x < worldWidth; x++ {
-		for y := 0; y < worldWidth; y++ {
+		for y := 0; y < worldHeight; y++ {
 			t := g.gameMap.grid.Get(x, y)
 			if t.Walkable {
 				i = tilesImage.SubImage(image.Rectangle{
@@ -92,24 +95,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		g.units[i].Draw(screen)
 	}
 
-	// for _, t := range g.gameMap.grid.AllCells() {
-	// 	var i *ebiten.Image
-
-	// 	if !t.Walkable {
-	// 		i = tilesImage.SubImage(image.Rectangle{
-	// 			Min: image.Pt(0, 0),
-	// 			Max: image.Pt(cellWidth, cellHeight),
-	// 		}).(*ebiten.Image)
-	// 	} else {
-	// 		i = tilesImage.SubImage(image.Rectangle{
-	// 			Min: image.Pt(10, 0),
-	// 			Max: image.Pt(cellWidth+10, cellHeight),
-	// 		}).(*ebiten.Image)
-	// 	}
-	// 	op := &ebiten.DrawImageOptions{}
-	// 	op.GeoM.Translate(float64(t.X*cellWidth), float64(t.Y*cellHeight))
-	// 	screen.DrawImage(i, op)
-	// }
+	msg := fmt.Sprintf(`TPS: %0.2f
+FPS: %0.2f`, ebiten.CurrentTPS(), ebiten.CurrentFPS())
+	ebitenutil.DebugPrint(screen, msg)
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
@@ -126,7 +114,7 @@ func main() {
 		gameMap: NewGameMap(worldWidth, worldHeight, cellWidth, cellWidth),
 	}
 
-	for i := 0; i < 200; i++ {
+	for i := 0; i < 100; i++ {
 		game.units = append(game.units, NewUnit(1, 1, game.gameMap))
 	}
 

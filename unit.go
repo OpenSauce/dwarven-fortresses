@@ -3,6 +3,7 @@ package main
 import (
 	"image"
 	"math/rand"
+	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/solarlune/paths"
@@ -16,6 +17,7 @@ type Pathfinder interface {
 }
 
 type Unit struct {
+	Running    bool
 	XPos, YPos int
 	XTar, YTar int
 	Pathfinder
@@ -26,6 +28,7 @@ type Unit struct {
 
 func NewUnit(startX, startY int, pf Pathfinder) *Unit {
 	u := Unit{
+		false,
 		startX,
 		startY,
 		startX,
@@ -40,18 +43,31 @@ func NewUnit(startX, startY int, pf Pathfinder) *Unit {
 		nil,
 	}
 
+	go u.gameLoop()
+
 	return &u
 }
 
-func (u *Unit) Update() error {
-	if u.CurrentTurnTime < u.TurnSpeed+u.GetCellCost(u.XPos, u.YPos) {
-		u.CurrentTurnTime++
-		return nil
-	}
-	u.CurrentTurnTime = 0
+func (u *Unit) gameLoop() {
+	tick := time.Tick(100 * time.Millisecond)
 
-	if (u.XTar == u.XPos && u.YTar == u.YPos) || u.currentPath == nil {
-		u.CurrentTurnTime -= 50
+	for range tick {
+		if !u.Running {
+			continue
+		}
+		u.Update()
+	}
+}
+
+func (u *Unit) Update() error {
+	// if u.CurrentTurnTime < u.TurnSpeed+u.GetCellCost(u.XPos, u.YPos) {
+	// 	u.CurrentTurnTime++
+	// 	return nil
+	// }
+	// u.CurrentTurnTime = 0
+
+	if (u.XTar == u.XPos && u.YTar == u.YPos) || u.currentPath == nil || u.currentPath.Next() == nil {
+		// u.CurrentTurnTime -= 50
 		u.getNewPos()
 		u.currentPath = u.Pathfinder.GetPath(u.XPos, u.YPos, u.XTar, u.YTar)
 
@@ -93,8 +109,8 @@ func (u *Unit) getNewPos() {
 	x := rand.Intn(width - 1)
 	y := rand.Intn(height - 1)
 
-	if u.Pathfinder.IsWalkable(x, y) {
-		u.XTar = x
-		u.YTar = y
-	}
+	// if u.Pathfinder.IsWalkable(x, y) {
+	u.XTar = x
+	u.YTar = y
+	// }
 }
