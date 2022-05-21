@@ -16,7 +16,7 @@ import (
 
 const (
 	worldWidth  int = 200
-	worldHeight int = 200
+	worldHeight int = 100
 	cellWidth   int = 8
 	cellHeight  int = 8
 )
@@ -54,7 +54,7 @@ func (g *Game) Update() error {
 		y = y / cellHeight
 		t := g.gameMap.grid.Get(x, y)
 		if t != nil {
-			t.Walkable = !t.Walkable
+			CreateJob(t.X, t.Y)
 		}
 	}
 
@@ -114,8 +114,8 @@ func main() {
 		gameMap: NewGameMap(worldWidth, worldHeight, cellWidth, cellWidth),
 	}
 
-	for i := 0; i < 100; i++ {
-		game.units = append(game.units, NewUnit(1, 1, game.gameMap))
+	for i := 0; i < 10; i++ {
+		game.units = append(game.units, NewUnit(1, 1, game.gameMap, GetNextJob))
 	}
 
 	// count := 0

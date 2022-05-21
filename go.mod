@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/hajimehoshi/ebiten/v2 v2.3.2
-	github.com/solarlune/paths v0.0.0-20210502000212-9a0a8bceed77
+	github.com/tomknightdev/paths v0.0.0-20220521154620-0819a9c046c2
 )
 
 require (
