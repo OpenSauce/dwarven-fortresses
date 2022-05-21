@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"image"
 	"image/png"
 	"log"
 
@@ -12,50 +11,77 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
+	camera "github.com/melonfunction/ebiten-camera"
 )
 
 const (
 	worldWidth  int = 200
-	worldHeight int = 100
+	worldHeight int = 200
 	cellWidth   int = 8
 	cellHeight  int = 8
 )
 
 var (
-	//go:embed resources/map001.png
-	sprite_sheet []byte
-	tilesImage   *ebiten.Image
+	Cam *camera.Camera
+
+	//go:embed resources/cursor.png
+	cursor_sheet []byte
+	cursorImage  *ebiten.Image
+	msx, msy     int
 )
 
 type Game struct {
-	// tileMap  []*Tile
-	// tileSize int
 	gameMap *GameMap
 	units   []*Unit
 }
 
 func init() {
-	img, err := png.Decode(bytes.NewReader(sprite_sheet))
+	img, err := png.Decode(bytes.NewReader(cursor_sheet))
 	if err != nil {
 		log.Fatal(err)
 	}
-	tilesImage = ebiten.NewImageFromImage(img)
+	cursorImage = ebiten.NewImageFromImage(img)
 }
 
-// type Tile struct {
-// 	X, Y           int
-// 	Hover, Clicked bool
-// }
-
 func (g *Game) Update() error {
+
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
-		x, y := ebiten.CursorPosition()
-		x = x / cellWidth
-		y = y / cellHeight
-		t := g.gameMap.grid.Get(x, y)
-		if t != nil {
-			CreateJob(t.X, t.Y)
+		msx, msy = getCursorCellPos()
+	}
+
+	if inpututil.MouseButtonPressDuration(ebiten.MouseButtonLeft) > 0 {
+
+	}
+
+	if inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) {
+		mex, mey := getCursorCellPos()
+
+		for x := msx; x < mex; x++ {
+			for y := msy; y < mey; y++ {
+				c := g.gameMap.grid.Get(x, y)
+				t := g.gameMap.tiles[c]
+				CreateJob(c, t)
+			}
 		}
+	}
+
+	// Move the camera
+	if inpututil.KeyPressDuration(ebiten.KeyD) > 0 {
+		Cam.X++
+	} else if inpututil.KeyPressDuration(ebiten.KeyA) > 0 {
+		Cam.X--
+	}
+	if inpututil.KeyPressDuration(ebiten.KeyS) > 0 {
+		Cam.Y++
+	} else if inpututil.KeyPressDuration(ebiten.KeyW) > 0 {
+		Cam.Y--
+	}
+
+	_, wy := ebiten.Wheel()
+	if wy > 0 {
+		Cam.Zoom(1.1)
+	} else if wy < 0 {
+		Cam.Zoom(0.9)
 	}
 
 	count := len(g.units)
@@ -64,72 +90,63 @@ func (g *Game) Update() error {
 		// g.units[i].Update()
 	}
 
+	for _, t := range g.gameMap.tiles {
+		t.Update()
+	}
+
 	return nil
 }
 
-func (g *Game) Draw(screen *ebiten.Image) {
-	var i *ebiten.Image
+func getCursorCellPos() (int, int) {
+	x, y := Cam.GetCursorCoords()
+	xi := int(x) / cellWidth
+	yi := int(y) / cellHeight
 
-	for x := 0; x < worldWidth; x++ {
-		for y := 0; y < worldHeight; y++ {
-			t := g.gameMap.grid.Get(x, y)
-			if t.Walkable {
-				i = tilesImage.SubImage(image.Rectangle{
-					Min: image.Pt(0, 0),
-					Max: image.Pt(cellWidth, cellHeight),
-				}).(*ebiten.Image)
-			} else {
-				i = tilesImage.SubImage(image.Rectangle{
-					Min: image.Pt(cellWidth, 0),
-					Max: image.Pt(cellWidth+cellWidth, cellHeight),
-				}).(*ebiten.Image)
-			}
-			op := &ebiten.DrawImageOptions{}
-			op.GeoM.Translate(float64(t.X*cellWidth), float64(t.Y*cellHeight))
-			screen.DrawImage(i, op)
-		}
-	}
+	return xi, yi
+}
+
+func (g *Game) Draw(screen *ebiten.Image) {
+	Cam.Surface.Clear()
+	g.gameMap.Draw(screen)
 
 	count := len(g.units)
 	for i := 0; i < count; i++ {
 		g.units[i].Draw(screen)
 	}
 
-	msg := fmt.Sprintf(`TPS: %0.2f
-FPS: %0.2f`, ebiten.CurrentTPS(), ebiten.CurrentFPS())
+	cx, cy := getCursorCellPos()
+	// Draw the cursoe
+	Cam.Surface.DrawImage(cursorImage, Cam.GetTranslation(float64(cx*cellWidth), float64(cy*cellHeight)))
+
+	// Draw to screen and zoom
+	Cam.Blit(screen)
+
+	msg := fmt.Sprintf("TPS: %0.2f FPS: %0.2f\n",
+		ebiten.CurrentTPS(), ebiten.CurrentFPS())
+
+	// for i, u := range g.units {
+	// 	msg += fmt.Sprintf("%d: %d\n", i, u.Energy)
+	// }
+
 	ebitenutil.DebugPrint(screen, msg)
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
-	// return 512, 384
-	w, h := ebiten.WindowSize()
-
-	return w / 2, h / 2
+	Cam.Resize(outsideWidth, outsideHeight)
+	return outsideWidth, outsideHeight
 }
 
 func main() {
+	// Create camera
+	Cam = camera.NewCamera(1024, 768, float64(worldWidth*cellWidth/2), float64(worldHeight*cellHeight/2), 0, 1)
+
 	game := Game{
-		// tileMap:  []*Tile{},
-		// tileSize: 10,
 		gameMap: NewGameMap(worldWidth, worldHeight, cellWidth, cellWidth),
 	}
 
-	for i := 0; i < 10; i++ {
-		game.units = append(game.units, NewUnit(1, 1, game.gameMap, GetNextJob))
+	for i := 0; i < 100; i++ {
+		game.units = append(game.units, NewUnit(worldWidth/2, worldHeight/2, game.gameMap, GetNextJob))
 	}
-
-	// count := 0
-	// for x := 0; x < 100; x++ {
-	// 	for y := 0; y < 100; y++ {
-	// 		game.tileMap = append(game.tileMap, &Tile{
-	// 			X: x * game.tileSize,
-	// 			Y: y * game.tileSize,
-	// 		})
-	// 		// game.tileMap[count].X = x * game.tileSize
-	// 		// game.tileMap[count].Y =
-	// 		count++
-	// 	}
-	// }
 
 	ebiten.SetWindowSize(1024, 768)
 	ebiten.SetWindowTitle("Mouse Test")

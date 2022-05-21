@@ -1,12 +1,42 @@
 package main
 
 import (
+	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/tomknightdev/paths"
+	"golang.org/x/exp/rand"
 )
 
 type GameMap struct {
 	grid        *paths.Grid
+	tiles       map[*paths.Cell]*Tile
 	getPathChan chan getPathRequest
+}
+
+type Tile struct {
+	cell     *paths.Cell
+	resource *Resource
+	// XPos, YPos int
+}
+
+func (t *Tile) Update() error {
+	if t.resource.resourceType == Dirt {
+		r := rand.Intn(5000000)
+
+		if r > 4999998 {
+			t.resource = nil
+			t.resource = CreateResource(2)
+		} else if r > 4999995 {
+			t.resource = nil
+			t.resource = CreateResource(1)
+		}
+	}
+
+	return nil
+}
+
+func (t *Tile) Gethered() {
+	t.resource = nil
+	t.resource = CreateResource(0)
 }
 
 type getPathRequest struct {
@@ -17,24 +47,31 @@ type getPathRequest struct {
 func NewGameMap(gridWidth, gridHeight, cellWidth, cellHeight int) *GameMap {
 	gm := GameMap{
 		grid:        paths.NewGrid(gridWidth, gridHeight, cellWidth, cellHeight),
+		tiles:       make(map[*paths.Cell]*Tile),
 		getPathChan: make(chan getPathRequest),
 	}
 
-	// mapCentre := gridWidth / 2
-
 	for _, c := range gm.grid.AllCells() {
+		r := rand.Intn(50)
+		if r < 2 {
+			r = 3
+		} else if r < 10 {
+			r = 2
+		} else if r < 25 {
+			r = 1
+		} else {
+			r = 0
+		}
+
+		c.Cost += float64(r)
+		t := Tile{
+			cell:     c,
+			resource: CreateResource(ResourceType(r)),
+		}
+		gm.tiles[c] = &t
+
 		if c.X == 0 || c.Y == 0 || c.X == gridWidth-1 || c.Y == gridHeight-1 {
 			c.Walkable = false
-		} else {
-			// r := rand.Intn(100)
-			// if r > 90 {
-			// 	c.Walkable = false
-			// }
-			// Take the map centre, deduct current tile from it, the lower the number the closer to the centre
-			// xCost := math.Abs(float64(mapCentre - c.X))
-			// yCost := math.Abs(float64(mapCentre - c.Y))
-			// cost := float64(gridWidth) - float64(xCost+yCost)
-			// c.Cost = math.Max(cost, 1)
 		}
 	}
 
@@ -73,4 +110,21 @@ func (g *GameMap) GetCellCost(x, y int) int {
 func (g *GameMap) SwitchWalkable(x, y int) {
 	c := g.grid.Get(x, y)
 	c.Walkable = !c.Walkable
+}
+
+func (g *GameMap) Update() error {
+	return nil
+}
+
+func (g *GameMap) Draw(screen *ebiten.Image) {
+	for _, t := range g.tiles {
+
+		// Draw the tile
+		op := Cam.GetTranslation(float64(t.cell.X*cellWidth), float64(t.cell.Y*cellHeight))
+		if t.resource.queued {
+			op.ColorM.ChangeHSV(1, 1, 0.5)
+		}
+
+		Cam.Surface.DrawImage(t.resource.image, op)
+	}
 }

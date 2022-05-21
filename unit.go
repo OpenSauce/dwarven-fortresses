@@ -1,11 +1,21 @@
 package main
 
 import (
-	"image"
+	"bytes"
+	"image/png"
+	"log"
 	"time"
+
+	_ "embed"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/tomknightdev/paths"
+)
+
+var (
+	//go:embed resources/creatures/player.png
+	player_sheet []byte
+	playerImage  *ebiten.Image
 )
 
 type Pathfinder interface {
@@ -29,6 +39,15 @@ type Unit struct {
 	image                      *ebiten.Image
 	currentPath                *paths.Path
 	currentJob                 *Job
+	maxEnergy, Energy          int
+}
+
+func init() {
+	img, err := png.Decode(bytes.NewReader(player_sheet))
+	if err != nil {
+		log.Fatal(err)
+	}
+	playerImage = ebiten.NewImageFromImage(img)
 }
 
 func NewUnit(startX, startY int, pf Pathfinder, jf func() *Job) *Unit {
@@ -37,11 +56,10 @@ func NewUnit(startX, startY int, pf Pathfinder, jf func() *Job) *Unit {
 		YPos:       startY,
 		Pathfinder: pf,
 		jobfinder:  jf,
-		TurnSpeed:  10,
-		image: tilesImage.SubImage(image.Rectangle{
-			Min: image.Pt(2*cellWidth, 3*cellHeight),
-			Max: image.Pt(3*cellWidth, 4*cellHeight),
-		}).(*ebiten.Image),
+		TurnSpeed:  200,
+		image:      playerImage,
+		maxEnergy:  1000,
+		Energy:     1000,
 	}
 
 	go u.gameLoop()
@@ -50,7 +68,7 @@ func NewUnit(startX, startY int, pf Pathfinder, jf func() *Job) *Unit {
 }
 
 func (u *Unit) gameLoop() {
-	tick := time.Tick(100 * time.Millisecond)
+	tick := time.Tick(time.Duration(u.TurnSpeed) * time.Millisecond)
 
 	for range tick {
 		if !u.Running {
@@ -61,14 +79,14 @@ func (u *Unit) gameLoop() {
 }
 
 func (u *Unit) Update() error {
-	// if u.CurrentTurnTime < u.TurnSpeed+u.GetCellCost(u.XPos, u.YPos) {
-	// 	u.CurrentTurnTime++
-	// 	return nil
-	// }
-	// u.CurrentTurnTime = 0
+	if u.Energy < u.maxEnergy {
+		u.Energy += 5
+	}
 
 	if u.currentJob == nil {
-		u.currentJob = GetNextJob()
+		if u.Energy > u.maxEnergy/2 {
+			u.currentJob = GetNextJob()
+		}
 	}
 
 	if u.currentJob != nil {
@@ -81,21 +99,21 @@ func (u *Unit) Update() error {
 }
 
 func (u *Unit) Work() {
-	time.Sleep(time.Second * 5)
-
-	u.SwitchWalkable(u.currentJob.XPos, u.currentJob.YPos)
+	time.Sleep(time.Second * 2)
+	u.Energy -= 100
+	u.currentJob.CompleteJob()
 	u.currentJob = nil
 }
 
 // Move returns true if at target cell
 func (u *Unit) Move() bool {
-	if (u.XPos == u.currentJob.XPos || u.XPos == u.currentJob.XPos-1 || u.XPos == u.currentJob.XPos+1) &&
-		(u.YPos == u.currentJob.YPos || u.YPos == u.currentJob.YPos-1 || u.YPos == u.currentJob.YPos+1) {
+	if (u.XPos == u.currentJob.cell.X || u.XPos == u.currentJob.cell.X-1 || u.XPos == u.currentJob.cell.X+1) &&
+		(u.YPos == u.currentJob.cell.Y || u.YPos == u.currentJob.cell.Y-1 || u.YPos == u.currentJob.cell.Y+1) {
 		return true
 	}
 
 	if u.currentPath == nil || u.currentPath.Next() == nil {
-		u.currentPath = u.Pathfinder.GetPath(u.XPos, u.YPos, u.currentJob.XPos, u.currentJob.YPos)
+		u.currentPath = u.Pathfinder.GetPath(u.XPos, u.YPos, u.currentJob.cell.X, u.currentJob.cell.Y)
 
 		if u.currentPath == nil {
 			return false
@@ -106,7 +124,7 @@ func (u *Unit) Move() bool {
 
 	if next != nil {
 		if !next.Walkable {
-			u.currentPath = u.Pathfinder.GetPath(u.XPos, u.YPos, u.currentJob.XPos, u.currentJob.YPos)
+			u.currentPath = u.Pathfinder.GetPath(u.XPos, u.YPos, u.currentJob.cell.X, u.currentJob.cell.Y)
 			if u.currentPath == nil {
 				return false
 			}
@@ -116,6 +134,7 @@ func (u *Unit) Move() bool {
 
 		u.XPos = next.X
 		u.YPos = next.Y
+		u.Energy -= 10
 
 		u.currentPath.Advance()
 	}
@@ -124,19 +143,6 @@ func (u *Unit) Move() bool {
 }
 
 func (u *Unit) Draw(screen *ebiten.Image) {
-
-	op := &ebiten.DrawImageOptions{}
-	op.GeoM.Translate(float64(u.XPos*cellWidth), float64(u.YPos*cellHeight))
-	screen.DrawImage(u.image, op)
+	// Draw the unit
+	Cam.Surface.DrawImage(u.image, Cam.GetTranslation(float64(u.XPos*cellWidth), float64(u.YPos*cellHeight)))
 }
-
-// func (u *Unit) getNewPos() {
-// 	width, height := u.Pathfinder.GetMapDimensions()
-// 	x := rand.Intn(width - 1)
-// 	y := rand.Intn(height - 1)
-
-// 	// if u.Pathfinder.IsWalkable(x, y) {
-// 	u.XTar = x
-// 	u.YTar = y
-// 	// }
-// }
