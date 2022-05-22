@@ -15,14 +15,15 @@ import (
 )
 
 const (
-	worldWidth  int = 200
-	worldHeight int = 200
+	worldWidth  int = 250
+	worldHeight int = 250
 	cellWidth   int = 8
 	cellHeight  int = 8
 )
 
 var (
-	Cam *camera.Camera
+	Cam                               *camera.Camera
+	LastWindowWidth, LastWindowHeight int
 
 	//go:embed resources/cursor.png
 	cursor_sheet []byte
@@ -66,21 +67,23 @@ func (g *Game) Update() error {
 	}
 
 	// Move the camera
-	if inpututil.KeyPressDuration(ebiten.KeyD) > 0 {
+	if inpututil.KeyPressDuration(ebiten.KeyD) > 0 && Cam.X < float64(worldWidth*cellWidth) {
 		Cam.X++
-	} else if inpututil.KeyPressDuration(ebiten.KeyA) > 0 {
+	} else if inpututil.KeyPressDuration(ebiten.KeyA) > 0 && Cam.X > 0 {
 		Cam.X--
 	}
-	if inpututil.KeyPressDuration(ebiten.KeyS) > 0 {
+	if inpututil.KeyPressDuration(ebiten.KeyS) > 0 && Cam.Y < float64(worldHeight*cellHeight) {
 		Cam.Y++
-	} else if inpututil.KeyPressDuration(ebiten.KeyW) > 0 {
+	} else if inpututil.KeyPressDuration(ebiten.KeyW) > 0 && Cam.Y > 0 {
 		Cam.Y--
 	}
 
 	_, wy := ebiten.Wheel()
-	if wy > 0 {
+	if wy > 0 && Cam.Scale < 10 {
+		// Cam.Resize(Cam.Width+10, Cam.Height+10)
 		Cam.Zoom(1.1)
-	} else if wy < 0 {
+	} else if wy < 0 && Cam.Scale > 1.1 {
+		// Cam.Resize(Cam.Width-10, Cam.Height-10)
 		Cam.Zoom(0.9)
 	}
 
@@ -124,6 +127,13 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	msg := fmt.Sprintf("TPS: %0.2f FPS: %0.2f\n",
 		ebiten.CurrentTPS(), ebiten.CurrentFPS())
 
+	// camXPos := int(Cam.X) / cellWidth
+	// camYPos := int(Cam.Y) / cellHeight
+
+	// msg += fmt.Sprintf("CAM SIZE: %d / %d\n", camXPos, camYPos)
+	// msg += fmt.Sprintf("TILES DRAWN: %d\n", g.gameMap.DrawnTileCount())
+	// msg += fmt.Sprintf("CAM SCALE: %0.2f", Cam.Scale)
+
 	// for i, u := range g.units {
 	// 	msg += fmt.Sprintf("%d: %d\n", i, u.Energy)
 	// }
@@ -132,8 +142,14 @@ func (g *Game) Draw(screen *ebiten.Image) {
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
-	Cam.Resize(outsideWidth, outsideHeight)
+	if LastWindowWidth != outsideWidth || LastWindowHeight != outsideHeight {
+		Cam.Resize(outsideWidth, outsideHeight)
+		LastWindowWidth = outsideWidth
+		LastWindowHeight = outsideHeight
+	}
 	return outsideWidth, outsideHeight
+	// Cam.Resize(outsideWidth, outsideHeight)
+	// return outsideWidth, outsideHeight
 }
 
 func main() {
@@ -144,7 +160,7 @@ func main() {
 		gameMap: NewGameMap(worldWidth, worldHeight, cellWidth, cellWidth),
 	}
 
-	for i := 0; i < 100; i++ {
+	for i := 0; i < 50; i++ {
 		game.units = append(game.units, NewUnit(worldWidth/2, worldHeight/2, game.gameMap, GetNextJob))
 	}
 

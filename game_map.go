@@ -15,6 +15,7 @@ type GameMap struct {
 type Tile struct {
 	cell     *paths.Cell
 	resource *Resource
+	drawn    bool
 	// XPos, YPos int
 }
 
@@ -117,14 +118,37 @@ func (g *GameMap) Update() error {
 }
 
 func (g *GameMap) Draw(screen *ebiten.Image) {
-	for _, t := range g.tiles {
+	camXPos := int(Cam.X) / cellWidth
+	camYPos := int(Cam.Y) / cellHeight
 
-		// Draw the tile
-		op := Cam.GetTranslation(float64(t.cell.X*cellWidth), float64(t.cell.Y*cellHeight))
-		if t.resource.queued {
-			op.ColorM.ChangeHSV(1, 1, 0.5)
+	camWidth := Cam.Width / 2 / 8 / int(Cam.Scale)
+	camHeight := Cam.Height / 2 / 8 / int(Cam.Scale)
+
+	for c, t := range g.tiles {
+		if c.X < camXPos-camWidth || c.X > camXPos+camWidth || c.Y < camYPos-camHeight || c.Y > camYPos+camHeight {
+			t.drawn = false
+			continue
 		}
 
+		t.drawn = true
+
+		// Draw the tile
+		op := Cam.GetTranslation(float64(c.X*cellWidth), float64(c.Y*cellHeight))
+
 		Cam.Surface.DrawImage(t.resource.image, op)
+		if t.resource.queued {
+			Cam.Surface.DrawImage(cursorImage, op)
+		}
+
 	}
+}
+
+func (g *GameMap) DrawnTileCount() int {
+	count := 0
+	for _, t := range g.tiles {
+		if t.drawn {
+			count++
+		}
+	}
+	return count
 }

@@ -1,6 +1,8 @@
 package main
 
-import "github.com/tomknightdev/paths"
+import (
+	"github.com/tomknightdev/paths"
+)
 
 type JobType int
 
