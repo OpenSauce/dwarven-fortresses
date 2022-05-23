@@ -11,9 +11,7 @@ import (
 )
 
 var (
-	// //go:embed resources/creatures/player.png
-	// player_sheet []byte
-	playerImage *ebiten.Image
+	unitImage *ebiten.Image
 )
 
 type Pathfinder interface {
@@ -42,7 +40,7 @@ type Unit struct {
 }
 
 func init() {
-	playerImage = TilesetImage.SubImage(image.Rect(25*cellWidth, 0*cellHeight, 26*cellWidth, 1*cellHeight)).(*ebiten.Image)
+	unitImage = TilesetImage.SubImage(image.Rect(25*cellWidth, 0*cellHeight, 26*cellWidth, 1*cellHeight)).(*ebiten.Image)
 }
 
 func NewUnit(startX, startY int, pf Pathfinder, jf func() *Job) *Unit {
@@ -52,7 +50,7 @@ func NewUnit(startX, startY int, pf Pathfinder, jf func() *Job) *Unit {
 		Pathfinder: pf,
 		jobfinder:  jf,
 		TurnSpeed:  200,
-		image:      playerImage,
+		image:      unitImage,
 		maxEnergy:  1000,
 		Energy:     1000,
 		zLevel:     5,

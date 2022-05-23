@@ -6,6 +6,7 @@ import (
 	"image"
 	"image/png"
 	"log"
+	"math/rand"
 
 	_ "embed"
 
@@ -16,8 +17,8 @@ import (
 )
 
 const (
-	worldWidth  int = 50
-	worldHeight int = 50
+	worldWidth  int = 250
+	worldHeight int = 250
 	cellWidth   int = 16
 	cellHeight  int = 16
 )
@@ -188,8 +189,8 @@ func main() {
 		gameMap: NewGameMap(worldWidth, worldHeight, cellWidth, cellWidth),
 	}
 
-	for i := 0; i < 1; i++ {
-		game.units = append(game.units, NewUnit(worldWidth/2, worldHeight/2, game.gameMap, GetNextJob))
+	for i := 0; i < 7; i++ {
+		game.units = append(game.units, NewUnit((worldWidth/2)+rand.Intn(10)-5, (worldHeight/2)+rand.Intn(10)-5, game.gameMap, GetNextJob))
 	}
 
 	ebiten.SetWindowSize(1024, 768)

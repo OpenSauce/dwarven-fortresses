@@ -7,9 +7,10 @@ import (
 )
 
 type GameMap struct {
-	grids       map[int]*paths.Grid
-	tiles       map[*paths.Cell]*Tile
-	getPathChan chan getPathRequest
+	grids         map[int]*paths.Grid
+	tiles         map[*paths.Cell]*Tile
+	tilesByZLevel map[int][]*Tile
+	getPathChan   chan getPathRequest
 }
 
 type Tile struct {
@@ -21,17 +22,17 @@ type Tile struct {
 }
 
 func (t *Tile) Update() error {
-	if t.resource.resourceType == Dirt {
-		r := rand.Intn(5000000)
+	// if t.resource.resourceType == Dirt {
+	// 	r := rand.Intn(5000000)
 
-		if r > 4999998 {
-			t.resource = nil
-			t.resource = CreateResource(2)
-		} else if r > 4999995 {
-			t.resource = nil
-			t.resource = CreateResource(1)
-		}
-	}
+	// 	if r > 4999998 {
+	// 		t.resource = nil
+	// 		t.resource = CreateResource(2)
+	// 	} else if r > 4999995 {
+	// 		t.resource = nil
+	// 		t.resource = CreateResource(1)
+	// 	}
+	// }
 
 	return nil
 }
@@ -48,9 +49,10 @@ type getPathRequest struct {
 
 func NewGameMap(gridWidth, gridHeight, cellWidth, cellHeight int) *GameMap {
 	gm := GameMap{
-		grids:       make(map[int]*paths.Grid),
-		tiles:       make(map[*paths.Cell]*Tile),
-		getPathChan: make(chan getPathRequest),
+		grids:         make(map[int]*paths.Grid),
+		tiles:         make(map[*paths.Cell]*Tile),
+		tilesByZLevel: make(map[int][]*Tile),
+		getPathChan:   make(chan getPathRequest),
 	}
 
 	for i := 0; i < 10; i++ {
@@ -82,6 +84,7 @@ func NewGameMap(gridWidth, gridHeight, cellWidth, cellHeight int) *GameMap {
 				zLevel:   i,
 			}
 			gm.tiles[c] = &t
+			gm.tilesByZLevel[i] = append(gm.tilesByZLevel[i], &t)
 
 			if c.X == 0 || c.Y == 0 || c.X == gridWidth-1 || c.Y == gridHeight-1 {
 				c.Walkable = false
@@ -138,8 +141,8 @@ func (g *GameMap) Draw(screen *ebiten.Image) {
 	camWidth := Cam.Width / 2 / 8 / int(Cam.Scale)
 	camHeight := Cam.Height / 2 / 8 / int(Cam.Scale)
 
-	for c, t := range g.tiles {
-		if t.zLevel != CamZLevel || t.resource.image == nil || c.X < camXPos-camWidth || c.X > camXPos+camWidth || c.Y < camYPos-camHeight || c.Y > camYPos+camHeight {
+	for _, t := range g.tilesByZLevel[CamZLevel] {
+		if t.resource.image == nil || t.cell.X < camXPos-camWidth || t.cell.X > camXPos+camWidth || t.cell.Y < camYPos-camHeight || t.cell.Y > camYPos+camHeight {
 			t.drawn = false
 			continue
 		}
@@ -147,7 +150,7 @@ func (g *GameMap) Draw(screen *ebiten.Image) {
 		t.drawn = true
 
 		// Draw the tile
-		op := Cam.GetTranslation(float64(c.X*cellWidth), float64(c.Y*cellHeight))
+		op := Cam.GetTranslation(float64(t.cell.X*cellWidth), float64(t.cell.Y*cellHeight))
 
 		Cam.Surface.DrawImage(t.resource.image, op)
 		if t.resource.queued {
