@@ -1,10 +1,7 @@
 package main
 
 import (
-	"bytes"
 	"image"
-	"image/png"
-	"log"
 	"math/rand"
 
 	_ "embed"
@@ -19,13 +16,12 @@ const (
 	Grass
 	Tree
 	Water
+	Rock
+	Empty
 )
 
 var (
-	//go:embed resources/terrain.png
-	terrain_sheet []byte
-	terrainImage  *ebiten.Image
-
+	rockImages  []image.Rectangle
 	dirtImages  []image.Rectangle
 	grassImages []image.Rectangle
 	treeImages  []image.Rectangle
@@ -39,23 +35,23 @@ type Resource struct {
 }
 
 func init() {
-	img, err := png.Decode(bytes.NewReader(terrain_sheet))
-	if err != nil {
-		log.Fatal(err)
-	}
-	terrainImage = ebiten.NewImageFromImage(img)
+	rockImages = append(rockImages, image.Rect(20*cellWidth, 1*cellHeight, 21*cellWidth, 2*cellHeight))
 
 	dirtImages = append(dirtImages, image.Rect(0*cellWidth, 0*cellHeight, 1*cellWidth, 1*cellHeight))
 	dirtImages = append(dirtImages, image.Rect(1*cellWidth, 0*cellHeight, 2*cellWidth, 1*cellHeight))
 
-	grassImages = append(grassImages, image.Rect(2*cellWidth, 0*cellHeight, 3*cellWidth, 1*cellHeight))
-	grassImages = append(grassImages, image.Rect(3*cellWidth, 0*cellHeight, 4*cellWidth, 1*cellHeight))
+	grassImages = append(grassImages, image.Rect(5*cellWidth, 0*cellHeight, 6*cellWidth, 1*cellHeight))
+	grassImages = append(grassImages, image.Rect(6*cellWidth, 0*cellHeight, 7*cellWidth, 1*cellHeight))
+	grassImages = append(grassImages, image.Rect(7*cellWidth, 0*cellHeight, 8*cellWidth, 1*cellHeight))
 
-	treeImages = append(treeImages, image.Rect(4*cellWidth, 0*cellHeight, 5*cellWidth, 1*cellHeight))
-	treeImages = append(treeImages, image.Rect(5*cellWidth, 0*cellHeight, 6*cellWidth, 1*cellHeight))
-	treeImages = append(treeImages, image.Rect(6*cellWidth, 0*cellHeight, 7*cellWidth, 1*cellHeight))
+	treeImages = append(treeImages, image.Rect(0*cellWidth, 1*cellHeight, 1*cellWidth, 2*cellHeight))
+	treeImages = append(treeImages, image.Rect(1*cellWidth, 1*cellHeight, 2*cellWidth, 2*cellHeight))
+	treeImages = append(treeImages, image.Rect(2*cellWidth, 1*cellHeight, 3*cellWidth, 2*cellHeight))
+	treeImages = append(treeImages, image.Rect(3*cellWidth, 1*cellHeight, 4*cellWidth, 2*cellHeight))
+	treeImages = append(treeImages, image.Rect(4*cellWidth, 1*cellHeight, 5*cellWidth, 2*cellHeight))
+	treeImages = append(treeImages, image.Rect(5*cellWidth, 1*cellHeight, 6*cellWidth, 2*cellHeight))
 
-	waterImages = append(waterImages, image.Rect(7*cellWidth, 0*cellHeight, 8*cellWidth, 1*cellHeight))
+	waterImages = append(waterImages, image.Rect(14*cellWidth, 5*cellHeight, 15*cellWidth, 6*cellHeight))
 }
 
 func CreateResource(rt ResourceType) *Resource {
@@ -65,13 +61,17 @@ func CreateResource(rt ResourceType) *Resource {
 
 	switch rt {
 	case Dirt:
-		r.image = terrainImage.SubImage(dirtImages[rand.Intn(len(dirtImages))]).(*ebiten.Image)
+		r.image = TilesetImage.SubImage(dirtImages[rand.Intn(len(dirtImages))]).(*ebiten.Image)
 	case Grass:
-		r.image = terrainImage.SubImage(grassImages[rand.Intn(len(grassImages))]).(*ebiten.Image)
+		r.image = TilesetImage.SubImage(grassImages[rand.Intn(len(grassImages))]).(*ebiten.Image)
 	case Tree:
-		r.image = terrainImage.SubImage(treeImages[rand.Intn(len(treeImages))]).(*ebiten.Image)
+		r.image = TilesetImage.SubImage(treeImages[rand.Intn(len(treeImages))]).(*ebiten.Image)
 	case Water:
-		r.image = terrainImage.SubImage(waterImages[rand.Intn(len(waterImages))]).(*ebiten.Image)
+		r.image = TilesetImage.SubImage(waterImages[rand.Intn(len(waterImages))]).(*ebiten.Image)
+	case Rock:
+		r.image = TilesetImage.SubImage(rockImages[rand.Intn(len(rockImages))]).(*ebiten.Image)
+	case Empty:
+		r.image = nil
 	}
 
 	return &r

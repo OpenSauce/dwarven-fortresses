@@ -1,9 +1,7 @@
 package main
 
 import (
-	"bytes"
-	"image/png"
-	"log"
+	"image"
 	"time"
 
 	_ "embed"
@@ -13,17 +11,17 @@ import (
 )
 
 var (
-	//go:embed resources/creatures/player.png
-	player_sheet []byte
-	playerImage  *ebiten.Image
+	// //go:embed resources/creatures/player.png
+	// player_sheet []byte
+	playerImage *ebiten.Image
 )
 
 type Pathfinder interface {
-	GetPath(int, int, int, int) *paths.Path
+	GetPath(int, int, int, int, int, int) *paths.Path
 	GetMapDimensions() (int, int)
-	IsWalkable(int, int) bool
-	GetCellCost(int, int) int
-	SwitchWalkable(int, int)
+	IsWalkable(int, int, int) bool
+	GetCellCost(int, int, int) int
+	SwitchWalkable(int, int, int)
 }
 
 // type Jobfinder interface {
@@ -40,14 +38,11 @@ type Unit struct {
 	currentPath                *paths.Path
 	currentJob                 *Job
 	maxEnergy, Energy          int
+	zLevel                     int
 }
 
 func init() {
-	img, err := png.Decode(bytes.NewReader(player_sheet))
-	if err != nil {
-		log.Fatal(err)
-	}
-	playerImage = ebiten.NewImageFromImage(img)
+	playerImage = TilesetImage.SubImage(image.Rect(25*cellWidth, 0*cellHeight, 26*cellWidth, 1*cellHeight)).(*ebiten.Image)
 }
 
 func NewUnit(startX, startY int, pf Pathfinder, jf func() *Job) *Unit {
@@ -60,6 +55,7 @@ func NewUnit(startX, startY int, pf Pathfinder, jf func() *Job) *Unit {
 		image:      playerImage,
 		maxEnergy:  1000,
 		Energy:     1000,
+		zLevel:     5,
 	}
 
 	go u.gameLoop()
@@ -100,7 +96,7 @@ func (u *Unit) Update() error {
 
 func (u *Unit) Work() {
 	time.Sleep(time.Second * 2)
-	u.Energy -= 100
+	u.Energy -= 50
 	u.currentJob.CompleteJob()
 	u.currentJob = nil
 }
@@ -113,7 +109,7 @@ func (u *Unit) Move() bool {
 	}
 
 	if u.currentPath == nil || u.currentPath.Next() == nil {
-		u.currentPath = u.Pathfinder.GetPath(u.XPos, u.YPos, u.currentJob.cell.X, u.currentJob.cell.Y)
+		u.currentPath = u.Pathfinder.GetPath(u.XPos, u.YPos, u.zLevel, u.currentJob.cell.X, u.currentJob.cell.Y, u.currentJob.tile.zLevel)
 
 		if u.currentPath == nil {
 			return false
@@ -124,7 +120,7 @@ func (u *Unit) Move() bool {
 
 	if next != nil {
 		if !next.Walkable {
-			u.currentPath = u.Pathfinder.GetPath(u.XPos, u.YPos, u.currentJob.cell.X, u.currentJob.cell.Y)
+			u.currentPath = u.Pathfinder.GetPath(u.XPos, u.YPos, u.zLevel, u.currentJob.cell.X, u.currentJob.cell.Y, u.currentJob.tile.zLevel)
 			if u.currentPath == nil {
 				return false
 			}

@@ -7,7 +7,7 @@ import (
 )
 
 type GameMap struct {
-	grid        *paths.Grid
+	grids       map[int]*paths.Grid
 	tiles       map[*paths.Cell]*Tile
 	getPathChan chan getPathRequest
 }
@@ -16,6 +16,7 @@ type Tile struct {
 	cell     *paths.Cell
 	resource *Resource
 	drawn    bool
+	zLevel   int
 	// XPos, YPos int
 }
 
@@ -41,38 +42,50 @@ func (t *Tile) Gethered() {
 }
 
 type getPathRequest struct {
-	startX, startY, endX, endY int
-	responseChan               chan *paths.Path
+	startX, startY, startZ, endX, endY, endZ int
+	responseChan                             chan *paths.Path
 }
 
 func NewGameMap(gridWidth, gridHeight, cellWidth, cellHeight int) *GameMap {
 	gm := GameMap{
-		grid:        paths.NewGrid(gridWidth, gridHeight, cellWidth, cellHeight),
+		grids:       make(map[int]*paths.Grid),
 		tiles:       make(map[*paths.Cell]*Tile),
 		getPathChan: make(chan getPathRequest),
 	}
 
-	for _, c := range gm.grid.AllCells() {
-		r := rand.Intn(50)
-		if r < 2 {
-			r = 3
-		} else if r < 10 {
-			r = 2
-		} else if r < 25 {
-			r = 1
-		} else {
-			r = 0
-		}
+	for i := 0; i < 10; i++ {
+		gm.grids[i] = paths.NewGrid(gridWidth, gridHeight, cellWidth, cellHeight)
 
-		c.Cost += float64(r)
-		t := Tile{
-			cell:     c,
-			resource: CreateResource(ResourceType(r)),
-		}
-		gm.tiles[c] = &t
+		for _, c := range gm.grids[i].AllCells() {
+			resourceType := Empty
 
-		if c.X == 0 || c.Y == 0 || c.X == gridWidth-1 || c.Y == gridHeight-1 {
-			c.Walkable = false
+			if i < 5 {
+				resourceType = Rock
+			} else if i == 5 {
+				r := rand.Intn(50)
+				if r < 2 {
+					resourceType = Water
+				} else if r < 10 {
+					resourceType = Tree
+				} else if r < 25 {
+					resourceType = Grass
+				} else {
+					resourceType = Dirt
+				}
+
+				c.Cost += float64(r)
+			}
+
+			t := Tile{
+				cell:     c,
+				resource: CreateResource(resourceType),
+				zLevel:   i,
+			}
+			gm.tiles[c] = &t
+
+			if c.X == 0 || c.Y == 0 || c.X == gridWidth-1 || c.Y == gridHeight-1 {
+				c.Walkable = false
+			}
 		}
 	}
 
@@ -83,33 +96,34 @@ func NewGameMap(gridWidth, gridHeight, cellWidth, cellHeight int) *GameMap {
 
 func (g *GameMap) handleGetPathRequests() {
 	for r := range g.getPathChan {
-		r.responseChan <- g.grid.GetPathFromCells(g.grid.Get(r.startX, r.startY), g.grid.Get(r.endX, r.endY), true, true)
+		grid := g.grids[r.endZ]
+		r.responseChan <- grid.GetPathFromCells(grid.Get(r.startX, r.startY), grid.Get(r.endX, r.endY), true, true)
 	}
 }
 
-func (g *GameMap) GetPath(startX, startY, endX, endY int) *paths.Path {
+func (g *GameMap) GetPath(startX, startY, startZ, endX, endY, endZ int) *paths.Path {
 	responseChan := make(chan *paths.Path)
 	defer close(responseChan)
 	g.getPathChan <- getPathRequest{
-		startX, startY, endX, endY, responseChan,
+		startX, startY, startZ, endX, endY, endZ, responseChan,
 	}
 	return <-responseChan
 }
 
 func (g *GameMap) GetMapDimensions() (int, int) {
-	return g.grid.Width(), g.grid.Height()
+	return g.grids[0].Width(), g.grids[0].Height()
 }
 
-func (g *GameMap) IsWalkable(x, y int) bool {
-	return g.grid.Get(x, y).Walkable
+func (g *GameMap) IsWalkable(x, y, z int) bool {
+	return g.grids[z].Get(x, y).Walkable
 }
 
-func (g *GameMap) GetCellCost(x, y int) int {
-	return int(g.grid.Get(x, y).Cost)
+func (g *GameMap) GetCellCost(x, y, z int) int {
+	return int(g.grids[z].Get(x, y).Cost)
 }
 
-func (g *GameMap) SwitchWalkable(x, y int) {
-	c := g.grid.Get(x, y)
+func (g *GameMap) SwitchWalkable(x, y, z int) {
+	c := g.grids[z].Get(x, y)
 	c.Walkable = !c.Walkable
 }
 
@@ -125,7 +139,7 @@ func (g *GameMap) Draw(screen *ebiten.Image) {
 	camHeight := Cam.Height / 2 / 8 / int(Cam.Scale)
 
 	for c, t := range g.tiles {
-		if c.X < camXPos-camWidth || c.X > camXPos+camWidth || c.Y < camYPos-camHeight || c.Y > camYPos+camHeight {
+		if t.zLevel != CamZLevel || t.resource.image == nil || c.X < camXPos-camWidth || c.X > camXPos+camWidth || c.Y < camYPos-camHeight || c.Y > camYPos+camHeight {
 			t.drawn = false
 			continue
 		}
