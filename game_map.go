@@ -1,8 +1,10 @@
 package main
 
 import (
+	"image/color"
+
+	"github.com/OpenSauce/paths"
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/tomknightdev/paths"
 	"golang.org/x/exp/rand"
 )
 
@@ -73,9 +75,10 @@ func NewGameMap(gridWidth, gridHeight, cellWidth, cellHeight int) *GameMap {
 					resourceType = Grass
 				} else {
 					resourceType = Dirt
+					r = 0
 				}
 
-				c.Cost += float64(r)
+				// c.Cost += float64(r)
 			}
 
 			t := Tile{
@@ -141,7 +144,11 @@ func (g *GameMap) Draw(screen *ebiten.Image) {
 	camWidth := Cam.Width / 2 / 8 / int(Cam.Scale)
 	camHeight := Cam.Height / 2 / 8 / int(Cam.Scale)
 
-	for _, t := range g.tilesByZLevel[CamZLevel] {
+	cl := CamZLevel
+	if cl > 5 {
+		cl = 5
+	}
+	for _, t := range g.tilesByZLevel[cl] {
 		if t.resource.image == nil || t.cell.X < camXPos-camWidth || t.cell.X > camXPos+camWidth || t.cell.Y < camYPos-camHeight || t.cell.Y > camYPos+camHeight {
 			t.drawn = false
 			continue
@@ -152,12 +159,22 @@ func (g *GameMap) Draw(screen *ebiten.Image) {
 		// Draw the tile
 		op := Cam.GetTranslation(float64(t.cell.X*cellWidth), float64(t.cell.Y*cellHeight))
 
+		if CamZLevel > cl {
+			op.ColorM.Apply(color.RGBA{
+				R: 100,
+				G: 100,
+				B: 100,
+				A: 100,
+			})
+		}
+
 		Cam.Surface.DrawImage(t.resource.image, op)
 		if t.resource.queued {
 			Cam.Surface.DrawImage(cursorImage, op)
 		}
 
 	}
+
 }
 
 func (g *GameMap) DrawnTileCount() int {

@@ -3,11 +3,10 @@ module github.com/tomknightdev/ebiten-mouse-test
 go 1.18
 
 require (
+	github.com/OpenSauce/paths v0.0.0-20220524183615-02108c8a273c
 	github.com/hajimehoshi/ebiten/v2 v2.3.2
 	github.com/melonfunction/ebiten-camera v0.0.0-20220108183711-5c8a2c471904
-	github.com/solarlune/paths v0.0.0-20210502000212-9a0a8bceed77
-	github.com/tomknightdev/paths v0.0.0-20220521154620-0819a9c046c2
-	golang.org/x/exp v0.0.0-20190731235908-ec7cb31e5a56
+	golang.org/x/exp v0.0.0-20220518171630-0b5c67f07fdf
 )
 
 require (

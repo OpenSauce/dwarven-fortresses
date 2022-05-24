@@ -21,6 +21,8 @@ const (
 	worldHeight int = 250
 	cellWidth   int = 16
 	cellHeight  int = 16
+
+	units int = 1000
 )
 
 var (
@@ -189,7 +191,7 @@ func main() {
 		gameMap: NewGameMap(worldWidth, worldHeight, cellWidth, cellWidth),
 	}
 
-	for i := 0; i < 7; i++ {
+	for i := 0; i < units; i++ {
 		game.units = append(game.units, NewUnit((worldWidth/2)+rand.Intn(10)-5, (worldHeight/2)+rand.Intn(10)-5, game.gameMap, GetNextJob))
 	}
 

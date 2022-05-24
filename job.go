@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/tomknightdev/paths"
+	"github.com/OpenSauce/paths"
 )
 
 type JobType int
@@ -23,6 +23,7 @@ type Job struct {
 func (j *Job) CompleteJob() {
 	if j.JobType == Gather {
 		j.tile.Gethered()
+		// j.tile.cell.Cost = float64(Dirt)
 	}
 }
 

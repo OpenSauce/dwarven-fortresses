@@ -6,8 +6,8 @@ import (
 
 	_ "embed"
 
+	"github.com/OpenSauce/paths"
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/tomknightdev/paths"
 )
 
 var (
