@@ -15,7 +15,10 @@ var (
 )
 
 type Pathfinder interface {
-	GetPath(int, int, int, int, int, int) *paths.Path
+	GetPath(int, int, int, int, int, int) []struct {
+		*paths.Path
+		ZTraversable
+	}
 	GetMapDimensions() (int, int)
 	IsWalkable(int, int, int) bool
 	GetCellCost(int, int, int) int
@@ -33,10 +36,13 @@ type Unit struct {
 	jobfinder                  func() *Job
 	TurnSpeed, CurrentTurnTime int
 	image                      *ebiten.Image
-	currentPath                *paths.Path
-	currentJob                 *Job
-	maxEnergy, Energy          int
-	zLevel                     int
+	currentPaths               []struct {
+		*paths.Path
+		ZTraversable
+	}
+	currentJob        *Job
+	maxEnergy, Energy int
+	zLevel            int
 }
 
 func init() {
@@ -101,39 +107,68 @@ func (u *Unit) Work() {
 
 // Move returns true if at target cell
 func (u *Unit) Move() bool {
-	if (u.XPos == u.currentJob.cell.X || u.XPos == u.currentJob.cell.X-1 || u.XPos == u.currentJob.cell.X+1) &&
-		(u.YPos == u.currentJob.cell.Y || u.YPos == u.currentJob.cell.Y-1 || u.YPos == u.currentJob.cell.Y+1) {
+	if u.zLevel == u.currentJob.tile.zLevel && u.XPos == u.currentJob.cell.X && u.YPos == u.currentJob.cell.Y {
+		//|| u.XPos == u.currentJob.cell.X-1 || u.XPos == u.currentJob.cell.X+1)
+
+		//|| u.YPos == u.currentJob.cell.Y-1 || u.YPos == u.currentJob.cell.Y+1) {
 		return true
 	}
 
-	if u.currentPath == nil || u.currentPath.Next() == nil {
-		u.currentPath = u.Pathfinder.GetPath(u.XPos, u.YPos, u.zLevel, u.currentJob.cell.X, u.currentJob.cell.Y, u.currentJob.tile.zLevel)
+	if len(u.currentPaths) == 0 || u.currentPaths[0].Next() == nil {
+		u.currentPaths = u.Pathfinder.GetPath(u.XPos, u.YPos, u.zLevel, u.currentJob.cell.X, u.currentJob.cell.Y, u.currentJob.tile.zLevel)
 
-		if u.currentPath == nil {
+		if len(u.currentPaths) == 0 {
 			return false
 		}
 	}
 
-	next := u.currentPath.Next()
+	if u.currentPaths[0].AtEnd() {
+		u.atPathEnd()
+		return true
+	}
+
+	next := u.currentPaths[0].Next()
 
 	if next != nil {
 		if !next.Walkable {
-			u.currentPath = u.Pathfinder.GetPath(u.XPos, u.YPos, u.zLevel, u.currentJob.cell.X, u.currentJob.cell.Y, u.currentJob.tile.zLevel)
-			if u.currentPath == nil {
+			u.currentPaths = u.Pathfinder.GetPath(u.XPos, u.YPos, u.zLevel, u.currentJob.cell.X, u.currentJob.cell.Y, u.currentJob.tile.zLevel)
+			if len(u.currentPaths) == 0 {
 				return false
 			}
 
-			next = u.currentPath.Next()
+			next = u.currentPaths[0].Next()
 		}
 
 		u.XPos = next.X
 		u.YPos = next.Y
 		u.Energy -= 10
 
-		u.currentPath.Advance()
+		u.currentPaths[0].Advance()
+
+		if u.currentPaths[0].AtEnd() {
+			u.atPathEnd()
+			return true
+		}
 	}
 
 	return false
+}
+
+func (u *Unit) atPathEnd() {
+	if u.currentPaths[0].ZTraversable == UP {
+		u.zLevel++
+	} else if u.currentPaths[0].ZTraversable == DOWN {
+		u.zLevel--
+	}
+
+	if len(u.currentPaths) == 1 {
+		u.currentPaths = []struct {
+			*paths.Path
+			ZTraversable
+		}{}
+	} else {
+		u.currentPaths = u.currentPaths[1:]
+	}
 }
 
 func (u *Unit) Draw(screen *ebiten.Image) {

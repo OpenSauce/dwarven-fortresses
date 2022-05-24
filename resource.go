@@ -26,6 +26,9 @@ var (
 	grassImages []image.Rectangle
 	treeImages  []image.Rectangle
 	waterImages []image.Rectangle
+
+	stairDownImage *ebiten.Image
+	stairUpImage   *ebiten.Image
 )
 
 type Resource struct {
@@ -52,6 +55,9 @@ func init() {
 	treeImages = append(treeImages, image.Rect(5*cellWidth, 1*cellHeight, 6*cellWidth, 2*cellHeight))
 
 	waterImages = append(waterImages, image.Rect(14*cellWidth, 5*cellHeight, 15*cellWidth, 6*cellHeight))
+
+	stairUpImage = TransTilesetImage.SubImage(image.Rect(2*cellWidth, 6*cellHeight, 3*cellWidth, 7*cellHeight)).(*ebiten.Image)
+	stairDownImage = TransTilesetImage.SubImage(image.Rect(3*cellWidth, 6*cellHeight, 4*cellWidth, 7*cellHeight)).(*ebiten.Image)
 }
 
 func CreateResource(rt ResourceType) *Resource {

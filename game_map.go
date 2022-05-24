@@ -8,6 +8,14 @@ import (
 	"golang.org/x/exp/rand"
 )
 
+type ZTraversable int
+
+const (
+	NO ZTraversable = iota
+	UP
+	DOWN
+)
+
 type GameMap struct {
 	grids         map[int]*paths.Grid
 	tiles         map[*paths.Cell]*Tile
@@ -16,10 +24,11 @@ type GameMap struct {
 }
 
 type Tile struct {
-	cell     *paths.Cell
-	resource *Resource
-	drawn    bool
-	zLevel   int
+	cell         *paths.Cell
+	resource     *Resource
+	drawn        bool
+	zLevel       int
+	zTraversable ZTraversable
 	// XPos, YPos int
 }
 
@@ -39,14 +48,25 @@ func (t *Tile) Update() error {
 	return nil
 }
 
-func (t *Tile) Gethered() {
+func (t *Tile) Gathered() {
 	t.resource = nil
 	t.resource = CreateResource(0)
+	t.cell.Walkable = true
+}
+
+func (t *Tile) SetType(tileType string) {
+	if tileType == "stairDown" {
+		t.zTraversable = DOWN
+		t.resource.image = stairDownImage
+	}
 }
 
 type getPathRequest struct {
 	startX, startY, startZ, endX, endY, endZ int
-	responseChan                             chan *paths.Path
+	responseChan                             chan []struct {
+		*paths.Path
+		ZTraversable
+	}
 }
 
 func NewGameMap(gridWidth, gridHeight, cellWidth, cellHeight int) *GameMap {
@@ -102,13 +122,95 @@ func NewGameMap(gridWidth, gridHeight, cellWidth, cellHeight int) *GameMap {
 
 func (g *GameMap) handleGetPathRequests() {
 	for r := range g.getPathChan {
-		grid := g.grids[r.endZ]
-		r.responseChan <- grid.GetPathFromCells(grid.Get(r.startX, r.startY), grid.Get(r.endX, r.endY), true, true)
+		// If both start and end tiles are on the same z level, only one grid needs to be traversed
+		// PROBLEM: If the start and end z are the same, but are not connected (two seperate caves with stairs to the
+		// surface for example)
+		if r.startZ == r.endZ {
+			grid := g.grids[r.endZ]
+			r.responseChan <- []struct {
+				*paths.Path
+				ZTraversable
+			}{
+				{grid.GetPathFromCells(grid.Get(r.startX, r.startY), grid.Get(r.endX, r.endY), true, true),
+					NO,
+				},
+			}
+			continue
+		}
+
+		// On each level we need to map each traversable tile to the end position, if the end z level is different,
+		// then the end position(s) is each traversable tile
+
+		// Get map of traversable tile by type
+		travTiles := make(map[ZTraversable][]*Tile)
+		for _, t := range g.tilesByZLevel[r.startZ] {
+			if t.zTraversable != NO {
+				travTiles[t.zTraversable] = append(travTiles[t.zTraversable], t)
+			}
+		}
+
+		travPathsByZ := make(map[int][]struct {
+			tile *Tile
+			path *paths.Path
+		})
+
+		routesByCost := [][]struct {
+			*paths.Path
+			ZTraversable
+		}{}
+
+		//Create paths to each traversable tile
+		if r.endZ < r.startZ {
+			grid := g.grids[r.startZ]
+			for _, t := range travTiles[DOWN] {
+				p := grid.GetPathFromCells(grid.Get(r.startX, r.startY), grid.Get(t.cell.X, t.cell.Y), true, true)
+
+				if p == nil {
+					continue
+				}
+
+				travPathsByZ[t.zLevel] = append(travPathsByZ[t.zLevel], struct {
+					tile *Tile
+					path *paths.Path
+				}{
+					tile: t,
+					path: p,
+				})
+			}
+
+			if r.endZ == r.startZ-1 {
+				// For each path found, calculate that tile to end pos
+				grid := g.grids[r.endZ]
+				for _, p := range travPathsByZ[r.startZ] {
+					sx := p.path.Cells[p.path.Length()-1].X
+					sy := p.path.Cells[p.path.Length()-1].Y
+					path := grid.GetPathFromCells(grid.Get(sx, sy), grid.Get(r.endX, r.endY), true, true)
+
+					if path == nil {
+						continue
+					}
+
+					routesByCost = append(routesByCost, []struct {
+						*paths.Path
+						ZTraversable
+					}{{p.path, DOWN},
+						{path, NO}})
+				}
+			}
+
+			r.responseChan <- routesByCost[0]
+		}
 	}
 }
 
-func (g *GameMap) GetPath(startX, startY, startZ, endX, endY, endZ int) *paths.Path {
-	responseChan := make(chan *paths.Path)
+func (g *GameMap) GetPath(startX, startY, startZ, endX, endY, endZ int) []struct {
+	*paths.Path
+	ZTraversable
+} {
+	responseChan := make(chan []struct {
+		*paths.Path
+		ZTraversable
+	})
 	defer close(responseChan)
 	g.getPathChan <- getPathRequest{
 		startX, startY, startZ, endX, endY, endZ, responseChan,

@@ -12,7 +12,7 @@ E and Q - Raise and lower camera z level respectively
 
 Click/click and drag - Select tiles to be cleared and returned to dirt
 
-## TODO
+## Features to add
 
 - [ ] Basic GUI with options for controling the units (gather, build, etc.)
 - [ ] Z level pathfinding
@@ -20,3 +20,7 @@ Click/click and drag - Select tiles to be cleared and returned to dirt
 - [ ] Unit needs (food, water, sleep, etc.)
 - [ ] Title screen
 - [ ] Saving and loading
+
+## Problems to solve
+
+- [ ] A job is unreachable - add job back to the bottom of the list

@@ -17,12 +17,12 @@ import (
 )
 
 const (
-	worldWidth  int = 250
-	worldHeight int = 250
+	worldWidth  int = 10
+	worldHeight int = 10
 	cellWidth   int = 16
 	cellHeight  int = 16
 
-	units int = 1000
+	units int = 1
 )
 
 var (
@@ -39,7 +39,8 @@ var (
 	LastWindowWidth, LastWindowHeight int
 
 	cursorImage *ebiten.Image
-	msx, msy    int
+
+	msx, msy int
 )
 
 type Game struct {
@@ -64,13 +65,9 @@ func init() {
 }
 
 func (g *Game) Update() error {
-
+	// Designate gather area
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
 		msx, msy = getCursorCellPos()
-	}
-
-	if inpututil.MouseButtonPressDuration(ebiten.MouseButtonLeft) > 0 {
-
 	}
 
 	if inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) {
@@ -80,9 +77,18 @@ func (g *Game) Update() error {
 			for y := msy; y <= mey; y++ {
 				c := g.gameMap.grids[CamZLevel].Get(x, y)
 				t := g.gameMap.tiles[c]
-				CreateJob(c, t)
+				CreateJob(c, t, Gather)
 			}
 		}
+	}
+
+	// Place z travesable tile
+	if inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonRight) {
+		mex, mey := getCursorCellPos()
+
+		c := g.gameMap.grids[CamZLevel].Get(mex, mey)
+		t := g.gameMap.tiles[c]
+		CreateJob(c, t, StairDown)
 	}
 
 	// Move the camera

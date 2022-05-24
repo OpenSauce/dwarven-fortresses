@@ -8,6 +8,7 @@ type JobType int
 
 const (
 	Gather JobType = iota
+	StairDown
 )
 
 var (
@@ -22,16 +23,18 @@ type Job struct {
 
 func (j *Job) CompleteJob() {
 	if j.JobType == Gather {
-		j.tile.Gethered()
+		j.tile.Gathered()
 		// j.tile.cell.Cost = float64(Dirt)
+	} else if j.JobType == StairDown {
+		j.tile.SetType("stairDown")
 	}
 }
 
-func CreateJob(c *paths.Cell, t *Tile) {
+func CreateJob(c *paths.Cell, t *Tile, jt JobType) {
 	j := Job{
 		c,
 		t,
-		Gather,
+		jt,
 	}
 
 	j.tile.resource.queued = true
