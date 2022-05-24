@@ -1,4 +1,4 @@
-module github.com/tomknightdev/ebiten-mouse-test
+module github.com/tomknightdev/dwarven-fortresses
 
 go 1.18
 
