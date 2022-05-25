@@ -58,6 +58,9 @@ func (t *Tile) SetType(tileType string) {
 	if tileType == "stairDown" {
 		t.zTraversable = DOWN
 		t.resource.image = stairDownImage
+	} else if tileType == "stairUp" {
+		t.zTraversable = UP
+		t.resource.image = stairUpImage
 	}
 }
 

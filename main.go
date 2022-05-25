@@ -89,6 +89,9 @@ func (g *Game) Update() error {
 		c := g.gameMap.grids[CamZLevel].Get(mex, mey)
 		t := g.gameMap.tiles[c]
 		CreateJob(c, t, StairDown)
+		c = g.gameMap.grids[CamZLevel-1].Get(mex, mey)
+		t = g.gameMap.tiles[c]
+		CreateJob(c, t, StairUp)
 	}
 
 	// Move the camera

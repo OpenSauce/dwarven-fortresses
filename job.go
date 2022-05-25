@@ -9,6 +9,7 @@ type JobType int
 const (
 	Gather JobType = iota
 	StairDown
+	StairUp
 )
 
 var (
@@ -27,6 +28,8 @@ func (j *Job) CompleteJob() {
 		// j.tile.cell.Cost = float64(Dirt)
 	} else if j.JobType == StairDown {
 		j.tile.SetType("stairDown")
+	} else if j.JobType == StairUp {
+		j.tile.SetType("stairUp")
 	}
 }
 
