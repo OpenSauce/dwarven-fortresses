@@ -80,7 +80,9 @@ func (g *Game) Update() error {
 			for y := msy; y <= mey; y++ {
 				c := g.gameMap.grids[CamZLevel].Get(x, y)
 				t := g.gameMap.tiles[c]
-				CreateJob(c, t)
+				if t.resource.resourceType != Dirt {
+					CreateJob(c, t)
+				}
 			}
 		}
 	}
@@ -196,7 +198,7 @@ func main() {
 	}
 
 	ebiten.SetWindowSize(1024, 768)
-	ebiten.SetWindowTitle("Mouse Test")
+	ebiten.SetWindowTitle("DWARVEN FORTRESSES")
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
 
 	if err := ebiten.RunGame(&game); err != nil {
