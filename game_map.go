@@ -148,7 +148,9 @@ func (g *GameMap) Draw(screen *ebiten.Image) {
 	if cl > 5 {
 		cl = 5
 	}
-	for _, t := range g.tilesByZLevel[cl] {
+
+	tiles := g.tilesByZLevel[cl]
+	for _, t := range tiles {
 		if t.resource.image == nil || t.cell.X < camXPos-camWidth || t.cell.X > camXPos+camWidth || t.cell.Y < camYPos-camHeight || t.cell.Y > camYPos+camHeight {
 			t.drawn = false
 			continue

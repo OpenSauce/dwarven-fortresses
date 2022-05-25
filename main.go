@@ -101,7 +101,7 @@ func (g *Game) Update() error {
 
 	// Zoom the camera
 	_, wy := ebiten.Wheel()
-	if wy > 0 && Cam.Scale < 10 {
+	if wy > 0 && Cam.Scale < 2 {
 		// Cam.Resize(Cam.Width+10, Cam.Height+10)
 		Cam.Zoom(1.1)
 	} else if wy < 0 && Cam.Scale > 1.1 {
