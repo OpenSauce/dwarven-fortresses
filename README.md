@@ -17,6 +17,7 @@ Click/click and drag - Select tiles to be cleared and returned to dirt
 - [ ] Basic GUI with options for controling the units (gather, build, etc.)
 - [ ] Z level pathfinding
 - [ ] Procedural world generation
+- [ ] Switch to ECS system
 - [ ] Unit needs (food, water, sleep, etc.)
 - [ ] Title screen
 - [ ] Saving and loading

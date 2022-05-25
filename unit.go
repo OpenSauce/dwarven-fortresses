@@ -107,31 +107,36 @@ func (u *Unit) Work() {
 
 // Move returns true if at target cell
 func (u *Unit) Move() bool {
+	// Check if at destination cell on correct z level
 	if u.zLevel == u.currentJob.tile.zLevel && u.XPos == u.currentJob.cell.X && u.YPos == u.currentJob.cell.Y {
-		//|| u.XPos == u.currentJob.cell.X-1 || u.XPos == u.currentJob.cell.X+1)
-
-		//|| u.YPos == u.currentJob.cell.Y-1 || u.YPos == u.currentJob.cell.Y+1) {
 		return true
 	}
 
+	// If no paths in place, or current path has no next cell, find new paths
 	if len(u.currentPaths) == 0 || u.currentPaths[0].Next() == nil {
 		u.currentPaths = u.Pathfinder.GetPath(u.XPos, u.YPos, u.zLevel, u.currentJob.cell.X, u.currentJob.cell.Y, u.currentJob.tile.zLevel)
 
+		// No paths found
+		// TODO: return error as job cannot be reached
 		if len(u.currentPaths) == 0 {
 			return false
 		}
 	}
 
-	if u.currentPaths[0].AtEnd() {
-		u.atPathEnd()
+	// If reached end of current path and no more paths, reached destination
+	if u.currentPaths[0].AtEnd() && u.atPathEnd() {
 		return true
 	}
 
 	next := u.currentPaths[0].Next()
 
 	if next != nil {
+		// If the next cell is no longer walkable, find new paths
 		if !next.Walkable {
 			u.currentPaths = u.Pathfinder.GetPath(u.XPos, u.YPos, u.zLevel, u.currentJob.cell.X, u.currentJob.cell.Y, u.currentJob.tile.zLevel)
+
+			// No paths found
+			// TODO: return error as job cannot be reached
 			if len(u.currentPaths) == 0 {
 				return false
 			}
@@ -139,14 +144,15 @@ func (u *Unit) Move() bool {
 			next = u.currentPaths[0].Next()
 		}
 
+		// Set unit position
 		u.XPos = next.X
 		u.YPos = next.Y
 		u.Energy -= 10
 
 		u.currentPaths[0].Advance()
 
-		if u.currentPaths[0].AtEnd() {
-			u.atPathEnd()
+		// If reached end of current path and no more paths, reached destination
+		if u.currentPaths[0].AtEnd() && u.atPathEnd() {
 			return true
 		}
 	}
@@ -154,7 +160,7 @@ func (u *Unit) Move() bool {
 	return false
 }
 
-func (u *Unit) atPathEnd() {
+func (u *Unit) atPathEnd() bool {
 	if u.currentPaths[0].ZTraversable == UP {
 		u.zLevel++
 	} else if u.currentPaths[0].ZTraversable == DOWN {
@@ -166,8 +172,10 @@ func (u *Unit) atPathEnd() {
 			*paths.Path
 			ZTraversable
 		}{}
+		return true
 	} else {
 		u.currentPaths = u.currentPaths[1:]
+		return false
 	}
 }
 

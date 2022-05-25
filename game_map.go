@@ -123,6 +123,7 @@ func NewGameMap(gridWidth, gridHeight, cellWidth, cellHeight int) *GameMap {
 	return &gm
 }
 
+//TODO: Refactor this into it's own file/package
 func (g *GameMap) handleGetPathRequests() {
 	for r := range g.getPathChan {
 		// If both start and end tiles are on the same z level, only one grid needs to be traversed
