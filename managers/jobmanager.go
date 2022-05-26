@@ -1,4 +1,4 @@
-package main
+package managers
 
 import (
 	"github.com/OpenSauce/paths"
@@ -16,10 +16,13 @@ var (
 	jobs = []*Job{}
 )
 
-type Job struct {
-	cell *paths.Cell
-	tile *Tile
-	JobType
+type JobManager struct {
+}
+
+func NewJobManager() *JobManager {
+	j := JobManager{}
+
+	return &j
 }
 
 func (j *Job) CompleteJob() {
@@ -33,7 +36,7 @@ func (j *Job) CompleteJob() {
 	}
 }
 
-func CreateJob(c *paths.Cell, t *Tile, jt JobType) {
+func (jm *JobManager) CreateJob(c *paths.Cell, t *Tile, jt JobType) {
 	j := Job{
 		c,
 		t,
@@ -44,7 +47,7 @@ func CreateJob(c *paths.Cell, t *Tile, jt JobType) {
 	jobs = append(jobs, &j)
 }
 
-func GetNextJob() *Job {
+func (jm *JobManager) GetNextJob() *Job {
 	if len(jobs) == 0 {
 		return nil
 	}

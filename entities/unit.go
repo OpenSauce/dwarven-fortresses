@@ -1,4 +1,4 @@
-package main
+package entities
 
 import (
 	"image"
@@ -8,39 +8,43 @@ import (
 
 	"github.com/OpenSauce/paths"
 	"github.com/hajimehoshi/ebiten/v2"
+	camera "github.com/melonfunction/ebiten-camera"
+	"github.com/tomknightdev/dwarven-fortresses/components"
+	"github.com/tomknightdev/dwarven-fortresses/managers"
 )
 
 var (
 	unitImage *ebiten.Image
 )
 
-type Pathfinder interface {
-	GetPath(int, int, int, int, int, int) []struct {
-		*paths.Path
-		ZTraversable
-	}
-	GetMapDimensions() (int, int)
-	IsWalkable(int, int, int) bool
-	GetCellCost(int, int, int) int
-	SwitchWalkable(int, int, int)
+type pathfinder interface {
+	GetPath(int, int, int, int, int, int) []components.PathResponse
+	// GetMapDimensions() (int, int)
+	// IsWalkable(int, int, int) bool
+	// GetCellCost(int, int, int) int
+	// SwitchWalkable(int, int, int)
 }
 
 // type Jobfinder interface {
 // 	GetNextJob() *Job
 // }
 
+type jobFinder interface {
+	GetJob()
+}
+
 type Unit struct {
 	Running    bool
 	XPos, YPos int
-	Pathfinder
-	jobfinder                  func() *Job
+	pathfinder
+	jobfinder                  func() *managers.Job
 	TurnSpeed, CurrentTurnTime int
 	image                      *ebiten.Image
 	currentPaths               []struct {
 		*paths.Path
 		ZTraversable
 	}
-	currentJob        *Job
+	currentJob        *managers.Job
 	maxEnergy, Energy int
 	zLevel            int
 }
@@ -49,11 +53,11 @@ func init() {
 	unitImage = TilesetImage.SubImage(image.Rect(25*cellWidth, 0*cellHeight, 26*cellWidth, 1*cellHeight)).(*ebiten.Image)
 }
 
-func NewUnit(startX, startY int, pf Pathfinder, jf func() *Job) *Unit {
+func NewUnit(startX, startY int, pf pathfinder, jf func() *managers.Job) *Unit {
 	u := Unit{
 		XPos:       startX,
 		YPos:       startY,
-		Pathfinder: pf,
+		pathfinder: pf,
 		jobfinder:  jf,
 		TurnSpeed:  200,
 		image:      unitImage,
@@ -85,7 +89,7 @@ func (u *Unit) Update() error {
 
 	if u.currentJob == nil {
 		if u.Energy > u.maxEnergy/2 {
-			u.currentJob = GetNextJob()
+			u.currentJob = u.jobfinder()
 		}
 	}
 
@@ -179,7 +183,9 @@ func (u *Unit) atPathEnd() bool {
 	}
 }
 
-func (u *Unit) Draw(screen *ebiten.Image) {
-	// Draw the unit
-	Cam.Surface.DrawImage(u.image, Cam.GetTranslation(float64(u.XPos*cellWidth), float64(u.YPos*cellHeight)))
+func (u *Unit) Draw(cam *camera.Camera, camZLevel int) {
+	if u.zLevel == camZLevel {
+		// Draw the unit
+		cam.Surface.DrawImage(u.image, cam.GetTranslation(float64(u.XPos*cellWidth), float64(u.YPos*cellHeight)))
+	}
 }
