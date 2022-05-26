@@ -35,6 +35,8 @@ github.com/melonfunction/ebiten-camera v0.0.0-20220108183711-5c8a2c471904 h1:JT8
 github.com/melonfunction/ebiten-camera v0.0.0-20220108183711-5c8a2c471904/go.mod h1:WPLEOO2CeE4zL83xPQM0zD1o8cZ3VSUtG5JEYXvQFT4=
 github.com/pkg/browser v0.0.0-20180916011732-0a3d74bf9ce4/go.mod h1:4OwLy04Bl9Ef3GJJCoec+30X3LQs/0/m4HFRt/2LUSA=
 github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8/go.mod h1:HKlIX3XHQyzLZPlr7++PzdhaXEj94dEiJgZDTsxEqUI=
+github.com/sedyh/mizu v1.0.4 h1:cD0yGMqQd5qsseHoUHgxMCan57SvS5olGujTZfOCQqA=
+github.com/sedyh/mizu v1.0.4/go.mod h1:/8dPXzGnafYlpnCDCi8QiZOyGZD8cIynw7ERNmc/wEE=
 github.com/solarlune/paths v0.0.0-20210502000212-9a0a8bceed77 h1:BSBBPBXZuFdBG0OJyP52CO/AOQH3dVHhuOtYari7qhw=
 github.com/solarlune/paths v0.0.0-20210502000212-9a0a8bceed77/go.mod h1:C5Tmb7Ct4izNi5tAKM0aj5IoUOv1FnCmN8lk/ksa0Hk=
 github.com/tomknightdev/paths v0.0.0-20220521154620-0819a9c046c2 h1:ayWnC9wU+zcLKTpTzUKNCAXUK4WRq4ofzlqI8tDuyc0=

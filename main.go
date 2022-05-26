@@ -1,14 +1,9 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
-	"image"
-	"image/png"
 	"log"
 	"math/rand"
-
-	_ "embed"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
@@ -26,14 +21,6 @@ const (
 )
 
 var (
-	//go:embed resources/map.png
-	Tileset      []byte
-	TilesetImage *ebiten.Image
-
-	//go:embed resources/trans_map.png
-	TransTileset      []byte
-	TransTilesetImage *ebiten.Image
-
 	Cam                               *camera.Camera
 	CamZLevel                         int
 	LastWindowWidth, LastWindowHeight int
@@ -45,22 +32,6 @@ var (
 type Game struct {
 	gameMap *GameMap
 	units   []*Unit
-}
-
-func init() {
-	img, err := png.Decode(bytes.NewReader(Tileset))
-	if err != nil {
-		log.Fatal(err)
-	}
-	TilesetImage = ebiten.NewImageFromImage(img)
-
-	img, err = png.Decode(bytes.NewReader(TransTileset))
-	if err != nil {
-		log.Fatal(err)
-	}
-	TransTilesetImage = ebiten.NewImageFromImage(img)
-
-	cursorImage = TransTilesetImage.SubImage(image.Rect(29*cellWidth, 14*cellHeight, 30*cellWidth, 15*cellHeight)).(*ebiten.Image)
 }
 
 func (g *Game) Update() error {
