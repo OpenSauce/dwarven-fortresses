@@ -2,10 +2,12 @@ package main
 
 import (
 	"image/color"
+	"math/rand"
+	"time"
 
 	"github.com/OpenSauce/paths"
 	"github.com/hajimehoshi/ebiten/v2"
-	"golang.org/x/exp/rand"
+	"github.com/ojrac/opensimplex-go"
 )
 
 type GameMap struct {
@@ -57,29 +59,15 @@ func NewGameMap(gridWidth, gridHeight, cellWidth, cellHeight int) *GameMap {
 		getPathChan:   make(chan getPathRequest),
 	}
 
-	for i := 0; i < 10; i++ {
+	rand.Seed(time.Now().UTC().UnixNano())
+	sampler := opensimplex.New(rand.Int63())
+
+	for i := -20; i <= 10; i++ {
 		gm.grids[i] = paths.NewGrid(gridWidth, gridHeight, cellWidth, cellHeight)
 
 		for _, c := range gm.grids[i].AllCells() {
-			resourceType := Empty
 
-			if i < 5 {
-				resourceType = Rock
-			} else if i == 5 {
-				r := rand.Intn(50)
-				if r < 2 {
-					resourceType = Water
-				} else if r < 10 {
-					resourceType = Tree
-				} else if r < 25 {
-					resourceType = Grass
-				} else {
-					resourceType = Dirt
-					r = 0
-				}
-
-				// c.Cost += float64(r)
-			}
+			resourceType := gm.getResourceType(sampler, c.X, c.Y, i, 8, 20.0, 0.2, 20.0)
 
 			t := Tile{
 				cell:     c,
@@ -98,6 +86,26 @@ func NewGameMap(gridWidth, gridHeight, cellWidth, cellHeight int) *GameMap {
 	go gm.handleGetPathRequests()
 
 	return &gm
+}
+
+func (g *GameMap) getResourceType(sampler opensimplex.Noise, x, y, z, octaves int, scale, persistance, lacunarity float64) ResourceType {
+	amplitude := 1.0
+	frequency := 1.0
+	noiseHeight := 1.0
+
+	for i := 0; i < octaves; i++ {
+		sampleX := float64(x) / scale * frequency
+		sampleY := float64(y) / scale * frequency
+		sampleZ := float64(z) / scale * frequency
+
+		perlinValue := sampler.Eval3(sampleX, sampleY, sampleZ)
+		noiseHeight += perlinValue * amplitude
+
+		amplitude *= persistance
+		frequency *= lacunarity
+	}
+
+	return ResourceType(noiseHeight * 1.89)
 }
 
 func (g *GameMap) handleGetPathRequests() {
@@ -145,9 +153,6 @@ func (g *GameMap) Draw(screen *ebiten.Image) {
 	camHeight := Cam.Height / 2 / 8 / int(Cam.Scale)
 
 	cl := CamZLevel
-	if cl > 5 {
-		cl = 5
-	}
 	for _, t := range g.tilesByZLevel[cl] {
 		if t.resource.image == nil || t.cell.X < camXPos-camWidth || t.cell.X > camXPos+camWidth || t.cell.Y < camYPos-camHeight || t.cell.Y > camYPos+camHeight {
 			t.drawn = false

@@ -9,6 +9,8 @@ import (
 	"math/rand"
 
 	_ "embed"
+	"net/http"
+	_ "net/http/pprof"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
@@ -17,8 +19,8 @@ import (
 )
 
 const (
-	worldWidth  int = 250
-	worldHeight int = 250
+	worldWidth  int = 100
+	worldHeight int = 100
 	cellWidth   int = 16
 	cellHeight  int = 16
 
@@ -108,9 +110,9 @@ func (g *Game) Update() error {
 	}
 
 	// Adjust camera z level
-	if inpututil.IsKeyJustPressed(ebiten.KeyE) && CamZLevel > 0 {
+	if inpututil.IsKeyJustPressed(ebiten.KeyE) && CamZLevel > -20 {
 		CamZLevel--
-	} else if inpututil.IsKeyJustPressed(ebiten.KeyQ) && CamZLevel < 9 {
+	} else if inpututil.IsKeyJustPressed(ebiten.KeyQ) && CamZLevel < 10 {
 		CamZLevel++
 	}
 
@@ -183,6 +185,10 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 }
 
 func main() {
+	go func() {
+		fmt.Println(http.ListenAndServe("localhost:6060", nil))
+	}()
+
 	// Create camera
 	Cam = camera.NewCamera(1024, 768, float64(worldWidth*cellWidth/2), float64(worldHeight*cellHeight/2), 0, 1)
 	CamZLevel = 5
@@ -197,7 +203,6 @@ func main() {
 
 	ebiten.SetWindowSize(1024, 768)
 	ebiten.SetWindowTitle("Mouse Test")
-	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
 
 	if err := ebiten.RunGame(&game); err != nil {
 		log.Fatal(err)
