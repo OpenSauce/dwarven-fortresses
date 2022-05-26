@@ -153,7 +153,8 @@ func (g *GameMap) Draw(screen *ebiten.Image) {
 	camHeight := Cam.Height / 2 / 8 / int(Cam.Scale)
 
 	cl := CamZLevel
-	for _, t := range g.tilesByZLevel[cl] {
+	tiles := g.tilesByZLevel[cl]
+	for _, t := range tiles {
 		if t.resource.image == nil || t.cell.X < camXPos-camWidth || t.cell.X > camXPos+camWidth || t.cell.Y < camYPos-camHeight || t.cell.Y > camYPos+camHeight {
 			t.drawn = false
 			continue
@@ -179,7 +180,6 @@ func (g *GameMap) Draw(screen *ebiten.Image) {
 		}
 
 	}
-
 }
 
 func (g *GameMap) DrawnTileCount() int {

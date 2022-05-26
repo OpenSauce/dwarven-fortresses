@@ -82,7 +82,9 @@ func (g *Game) Update() error {
 			for y := msy; y <= mey; y++ {
 				c := g.gameMap.grids[CamZLevel].Get(x, y)
 				t := g.gameMap.tiles[c]
-				CreateJob(c, t)
+				if t.resource.resourceType != Dirt {
+					CreateJob(c, t)
+				}
 			}
 		}
 	}
@@ -101,7 +103,7 @@ func (g *Game) Update() error {
 
 	// Zoom the camera
 	_, wy := ebiten.Wheel()
-	if wy > 0 && Cam.Scale < 10 {
+	if wy > 0 && Cam.Scale < 2 {
 		// Cam.Resize(Cam.Width+10, Cam.Height+10)
 		Cam.Zoom(1.1)
 	} else if wy < 0 && Cam.Scale > 1.1 {
@@ -202,7 +204,8 @@ func main() {
 	}
 
 	ebiten.SetWindowSize(1024, 768)
-	ebiten.SetWindowTitle("Mouse Test")
+	ebiten.SetWindowTitle("DWARVEN FORTRESSES")
+	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
 
 	if err := ebiten.RunGame(&game); err != nil {
 		log.Fatal(err)
