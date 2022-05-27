@@ -1,13 +1,9 @@
 package main
 
 import (
-	"image/color"
-	"math/rand"
-	"time"
-
 	"github.com/OpenSauce/paths"
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/ojrac/opensimplex-go"
+	"github.com/tomknightdev/dwarven-fortresses/worldgen"
 )
 
 type GameMap struct {
@@ -59,19 +55,17 @@ func NewGameMap(gridWidth, gridHeight, cellWidth, cellHeight int) *GameMap {
 		getPathChan:   make(chan getPathRequest),
 	}
 
-	rand.Seed(time.Now().UTC().UnixNano())
-	sampler := opensimplex.New(rand.Int63())
+	wG := worldgen.New()
 
 	for i := -20; i <= 10; i++ {
 		gm.grids[i] = paths.NewGrid(gridWidth, gridHeight, cellWidth, cellHeight)
 
 		for _, c := range gm.grids[i].AllCells() {
 
-			resourceType := gm.getResourceType(sampler, c.X, c.Y, i, 8, 20.0, 0.2, 20.0)
-
+			resourceType := wG.GenerateTile(c.X, c.Y, i, 5, 20.0, 0.2, 2.0)
 			t := Tile{
 				cell:     c,
-				resource: CreateResource(resourceType),
+				resource: CreateResource(ResourceType(resourceType * 5)),
 				zLevel:   i,
 			}
 			gm.tiles[c] = &t
@@ -86,26 +80,6 @@ func NewGameMap(gridWidth, gridHeight, cellWidth, cellHeight int) *GameMap {
 	go gm.handleGetPathRequests()
 
 	return &gm
-}
-
-func (g *GameMap) getResourceType(sampler opensimplex.Noise, x, y, z, octaves int, scale, persistance, lacunarity float64) ResourceType {
-	amplitude := 1.0
-	frequency := 1.0
-	noiseHeight := 1.0
-
-	for i := 0; i < octaves; i++ {
-		sampleX := float64(x) / scale * frequency
-		sampleY := float64(y) / scale * frequency
-		sampleZ := float64(z) / scale * frequency
-
-		perlinValue := sampler.Eval3(sampleX, sampleY, sampleZ)
-		noiseHeight += perlinValue * amplitude
-
-		amplitude *= persistance
-		frequency *= lacunarity
-	}
-
-	return ResourceType(noiseHeight * 1.89)
 }
 
 func (g *GameMap) handleGetPathRequests() {
@@ -164,15 +138,6 @@ func (g *GameMap) Draw(screen *ebiten.Image) {
 
 		// Draw the tile
 		op := Cam.GetTranslation(float64(t.cell.X*cellWidth), float64(t.cell.Y*cellHeight))
-
-		if CamZLevel > cl {
-			op.ColorM.Apply(color.RGBA{
-				R: 100,
-				G: 100,
-				B: 100,
-				A: 100,
-			})
-		}
 
 		Cam.Surface.DrawImage(t.resource.image, op)
 		if t.resource.queued {

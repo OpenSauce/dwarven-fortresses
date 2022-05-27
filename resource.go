@@ -12,7 +12,7 @@ import (
 type ResourceType int
 
 const (
-	Dirt ResourceType = iota
+	Dirt ResourceType = iota - 2
 	Grass
 	Tree
 	Water
