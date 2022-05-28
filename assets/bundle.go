@@ -15,7 +15,7 @@ import (
 var (
 	WorldWidth  = 100
 	WorldHeight = 100
-	WorldLevels = 30
+	WorldLevels = 1
 	CellSize    = 16
 
 	//go:embed resources/map.png

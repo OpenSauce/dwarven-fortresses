@@ -1,7 +1,6 @@
 package main
 
 import (
-	"image"
 	"time"
 
 	_ "embed"
@@ -40,7 +39,7 @@ type Unit struct {
 }
 
 func init() {
-	unitImage = TransTilesetImage.SubImage(image.Rect(25*cellWidth, 0*cellHeight, 26*cellWidth, 1*cellHeight)).(*ebiten.Image)
+	// unitImage = TransTilesetImage.SubImage(image.Rect(25*cellWidth, 0*cellHeight, 26*cellWidth, 1*cellHeight)).(*ebiten.Image)
 }
 
 func NewUnit(startX, startY int, pf Pathfinder, jf func() *Job) *Unit {

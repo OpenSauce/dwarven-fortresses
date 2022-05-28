@@ -2,7 +2,6 @@ package main
 
 import (
 	"image"
-	"math/rand"
 
 	_ "embed"
 
@@ -59,20 +58,20 @@ func CreateResource(rt ResourceType) *Resource {
 		resourceType: rt,
 	}
 
-	switch rt {
-	case Dirt:
-		r.image = TilesetImage.SubImage(dirtImages[rand.Intn(len(dirtImages))]).(*ebiten.Image)
-	case Grass:
-		r.image = TilesetImage.SubImage(grassImages[rand.Intn(len(grassImages))]).(*ebiten.Image)
-	case Tree:
-		r.image = TilesetImage.SubImage(treeImages[rand.Intn(len(treeImages))]).(*ebiten.Image)
-	case Water:
-		r.image = TilesetImage.SubImage(waterImages[rand.Intn(len(waterImages))]).(*ebiten.Image)
-	case Rock:
-		r.image = TilesetImage.SubImage(rockImages[rand.Intn(len(rockImages))]).(*ebiten.Image)
-	case Empty:
-		r.image = nil
-	}
+	// switch rt {
+	// case Dirt:
+	// 	r.image = TilesetImage.SubImage(dirtImages[rand.Intn(len(dirtImages))]).(*ebiten.Image)
+	// case Grass:
+	// 	r.image = TilesetImage.SubImage(grassImages[rand.Intn(len(grassImages))]).(*ebiten.Image)
+	// case Tree:
+	// 	r.image = TilesetImage.SubImage(treeImages[rand.Intn(len(treeImages))]).(*ebiten.Image)
+	// case Water:
+	// 	r.image = TilesetImage.SubImage(waterImages[rand.Intn(len(waterImages))]).(*ebiten.Image)
+	// case Rock:
+	// 	r.image = TilesetImage.SubImage(rockImages[rand.Intn(len(rockImages))]).(*ebiten.Image)
+	// case Empty:
+	// 	r.image = nil
+	// }
 
 	return &r
 }

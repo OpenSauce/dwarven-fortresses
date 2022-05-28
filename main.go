@@ -9,6 +9,8 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	camera "github.com/melonfunction/ebiten-camera"
+	"github.com/sedyh/mizu/pkg/engine"
+	"github.com/tomknightdev/dwarven-fortresses/scenes"
 )
 
 const (
@@ -172,7 +174,9 @@ func main() {
 	ebiten.SetWindowTitle("DWARVEN FORTRESSES")
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
 
-	if err := ebiten.RunGame(&game); err != nil {
+	g := engine.NewGame(&scenes.Game{})
+
+	if err := ebiten.RunGame(g); err != nil {
 		log.Fatal(err)
 	}
 }

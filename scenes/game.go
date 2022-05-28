@@ -6,6 +6,7 @@ import (
 	"github.com/tomknightdev/dwarven-fortresses/assets"
 	"github.com/tomknightdev/dwarven-fortresses/components"
 	"github.com/tomknightdev/dwarven-fortresses/entities"
+	"github.com/tomknightdev/dwarven-fortresses/systems"
 )
 
 type Game struct {
@@ -21,7 +22,7 @@ func (g *Game) Setup(w engine.World) {
 
 	world := components.NewConstruct(assets.WorldWidth, assets.WorldHeight, assets.WorldLevels)
 
-	w.AddSystems()
+	w.AddSystems(systems.NewRender(assets.WorldWidth, assets.WorldHeight, assets.CellSize))
 
 	for z := 0; z < world.Levels; z++ {
 		for x := 0; x < world.Width; x++ {
