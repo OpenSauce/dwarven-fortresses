@@ -23,14 +23,22 @@ func NewRender(w, h, cs int) *Render {
 	}
 }
 
-// Render one frame
 func (r *Render) Draw(w engine.World, screen *ebiten.Image) {
-	// But choose the right entities yourself
+	// Camera
+	camera, found := w.View(components.Zoom{}, components.Position{}).Get()
+	if !found {
+		return
+	}
+	var zoom *components.Zoom
+	var camPos *components.Position
+	camera.Get(&zoom, &camPos)
+
+	// Entities with position and sprite components
 	view := w.View(components.Position{}, components.Sprite{})
-	view.Each(func(entity engine.Entity) {
+	view.Each(func(e engine.Entity) {
 		var pos *components.Position
 		var spr *components.Sprite
-		entity.Get(&pos, &spr)
+		e.Get(&pos, &spr)
 
 		op := &ebiten.DrawImageOptions{}
 		op.GeoM.Translate(float64(pos.X*r.cellSize), float64(pos.Y*r.cellSize))
@@ -38,23 +46,15 @@ func (r *Render) Draw(w engine.World, screen *ebiten.Image) {
 	})
 
 	op := &ebiten.DrawImageOptions{}
+	op.GeoM.Scale(zoom.Value, zoom.Value)
+	op.GeoM.Translate(-float64(camPos.X), -float64(camPos.Y))
+	op.Filter = ebiten.FilterNearest
 	screen.DrawImage(r.offscreen, op)
 	r.offscreen.Clear()
 
+	// Debug information
 	msg := fmt.Sprintf("TPS: %0.2f FPS: %0.2f\n",
 		ebiten.CurrentTPS(), ebiten.CurrentFPS())
-
-	// camXPos := int(Cam.X) / cellWidth
-	// camYPos := int(Cam.Y) / cellHeight
-
-	// msg += fmt.Sprintf("CAM SIZE: %d / %d\n", camXPos, camYPos)
-	// msg += fmt.Sprintf("TILES DRAWN: %d\n", g.gameMap.DrawnTileCount())
-	// msg += fmt.Sprintf("CAM SCALE: %0.2f", Cam.Scale)
-	// msg += fmt.Sprintf("CAM Z LEVEL: %d", CamZLevel)
-
-	// for i, u := range g.units {
-	// 	msg += fmt.Sprintf("%d: %d\n", i, u.Energy)
-	// }
 
 	ebitenutil.DebugPrint(screen, msg)
 }

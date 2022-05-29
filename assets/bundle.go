@@ -17,6 +17,7 @@ var (
 	WorldHeight = 100
 	WorldLevels = 1
 	CellSize    = 16
+	DwarfCount  = 7
 
 	//go:embed resources/map.png
 	Tileset      []byte
@@ -62,4 +63,5 @@ func init() {
 
 	Images["water"] = TilesetImage.SubImage(image.Rect(14*CellSize, 5*CellSize, 15*CellSize, 6*CellSize)).(*ebiten.Image)
 
+	Images["dwarf"] = TransTilesetImage.SubImage(image.Rect(25*CellSize, 0*CellSize, 26*CellSize, 1*CellSize)).(*ebiten.Image)
 }
