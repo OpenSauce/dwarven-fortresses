@@ -1,7 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"log"
+	"net/http"
+	_ "net/http/pprof"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/sedyh/mizu/pkg/engine"
@@ -153,6 +156,9 @@ import (
 // }
 
 func main() {
+	go func() {
+		fmt.Println(http.ListenAndServe("localhost:6060", nil))
+	}()
 	// // Create camera
 	// Cam = camera.NewCamera(1024, 768, float64(worldWidth*cellWidth/2), float64(worldHeight*cellHeight/2), 0, 1)
 	// CamZLevel = 5

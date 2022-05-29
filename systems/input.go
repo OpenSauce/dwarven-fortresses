@@ -18,30 +18,6 @@ func NewInput() *Input {
 }
 
 func (i *Input) Update(w engine.World) {
-	// Handle mouse update
-	mouseInput, found := w.View(components.Input{}, components.Position{}).Get()
-	if !found {
-		return
-	}
-	var input *components.Input
-	var mousePos *components.Position
-	mouseInput.Get(&input, &mousePos)
-
-	cx, cy := ebiten.CursorPosition()
-	mousePos.X = cx / assets.CellSize
-	mousePos.Y = cy / assets.CellSize
-
-	if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
-		tiles := w.View(components.TileType{}, components.Position{}).Filter()
-		var tp *components.Position
-
-		tiles[Index(mousePos.X, mousePos.Y, assets.WorldWidth)].Get(&tp)
-		w.AddEntities(&entities.Job{
-			Position: components.NewPosition(tp.X, tp.Y, tp.Z),
-			Task:     components.NewTask(enums.MoveTo),
-		})
-	}
-
 	// Handle camera update
 	camera, found := w.View(components.Zoom{}, components.Position{}).Get()
 	if !found {
@@ -52,14 +28,14 @@ func (i *Input) Update(w engine.World) {
 	camera.Get(&zoom, &camPos)
 
 	if inpututil.KeyPressDuration(ebiten.KeyD) > 0 && camPos.X < assets.WorldWidth*assets.CellSize {
-		camPos.X += 5
+		camPos.X += assets.CellSize / 2
 	} else if inpututil.KeyPressDuration(ebiten.KeyA) > 0 && camPos.X > 0 {
-		camPos.X -= 5
+		camPos.X -= assets.CellSize / 2
 	}
 	if inpututil.KeyPressDuration(ebiten.KeyS) > 0 && camPos.Y < assets.WorldHeight*assets.CellSize {
-		camPos.Y += 5
+		camPos.Y += assets.CellSize / 2
 	} else if inpututil.KeyPressDuration(ebiten.KeyW) > 0 && camPos.Y > 0 {
-		camPos.Y -= 5
+		camPos.Y -= assets.CellSize / 2
 	}
 
 	// Zoom the camera
@@ -76,8 +52,37 @@ func (i *Input) Update(w engine.World) {
 	} else if inpututil.IsKeyJustPressed(ebiten.KeyQ) && camPos.Z < assets.WorldLevels {
 		camPos.Z++
 	}
-}
 
-func Index(x, y, w int) int {
-	return y*w + x
+	// Handle mouse update
+	mouseInput, found := w.View(components.Input{}, components.Position{}).Get()
+	if !found {
+		return
+	}
+	var input *components.Input
+	var mousePos *components.Position
+	mouseInput.Get(&input, &mousePos)
+
+	cx, cy := ebiten.CursorPosition()
+	ww, wh := ebiten.WindowSize()
+	cx = cx + (camPos.X - (ww / 2))
+	cy = cy + (camPos.Y - (wh / 2))
+	mousePos.X = int((float64(cx) / zoom.Value) / float64(assets.CellSize))
+	mousePos.Y = int((float64(cy) / zoom.Value) / float64(assets.CellSize))
+
+	if inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) {
+		tiles := w.View(components.TileType{}, components.Position{}).Filter()
+		var tp *components.Position
+
+		for _, t := range tiles {
+			t.Get(&tp)
+			if tp.X == mousePos.X && tp.Y == mousePos.Y && tp.Z == camPos.Z {
+				w.AddEntities(&entities.Job{
+					Position: components.NewPosition(tp.X, tp.Y, tp.Z),
+					Task:     components.NewTask(enums.MoveTo),
+				})
+				break
+			}
+		}
+	}
+
 }

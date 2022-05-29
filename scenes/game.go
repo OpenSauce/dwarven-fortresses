@@ -17,7 +17,7 @@ type Game struct {
 
 func (g *Game) Setup(w engine.World) {
 	w.AddComponents(
-		components.WorldMap{},
+		components.GameMap{},
 		components.Position{},
 		components.Sprite{},
 		components.Move{},
@@ -28,29 +28,45 @@ func (g *Game) Setup(w engine.World) {
 		components.Worker{},
 	)
 
-	world := components.NewWorldMap(assets.WorldWidth, assets.WorldHeight, assets.WorldLevels, assets.CellSize)
+	gameMap := components.NewGameMap(assets.WorldWidth, assets.WorldHeight, assets.WorldLevels, assets.CellSize)
 
 	w.AddSystems(
-		systems.NewRender(assets.WorldWidth, assets.WorldHeight, assets.CellSize),
-		systems.NewPathfinder(world.Grids),
+		systems.NewRender(assets.WorldWidth, assets.WorldHeight, assets.CellSize, nil),
+		systems.NewPathfinder(gameMap.Grids),
 		systems.NewInput(),
 		systems.NewActor())
 
 	// World
-	for _, t := range world.Tiles {
-		w.AddEntities(&entities.Tile{
-			Position: components.NewPosition(t.X, t.Y, t.Z),
-			Sprite:   components.NewSprite(assets.Images["grass0"]),
-			TileType: components.NewTileType(enums.Grass),
+	for z := 0; z < assets.WorldLevels; z++ {
+		tmImage := ebiten.NewImage(assets.WorldWidth*assets.CellSize, assets.WorldHeight*assets.CellSize)
+		for _, t := range gameMap.Tiles[z] {
+			op := &ebiten.DrawImageOptions{}
+			op.GeoM.Translate(float64(t.X*assets.CellSize), float64(t.Y*assets.CellSize))
+			if z == 5 {
+				tmImage.DrawImage(assets.Images["grass0"], op)
+			} else if z < 5 {
+				tmImage.DrawImage(assets.Images["rock"], op)
+
+			}
+
+			w.AddEntities(&entities.Tile{
+				Position: components.NewPosition(t.X, t.Y, t.Z),
+				// Sprite:   components.NewSprite(assets.Images["grass0"]),
+				TileType: components.NewTileType(enums.Grass),
+			})
+		}
+		w.AddEntities(&entities.TileMap{
+			Sprite:   components.NewSprite(tmImage),
+			Position: components.NewPosition(0, 0, z),
 		})
 	}
 
 	// Actors
 	for i := 0; i < assets.DwarfCount; i++ {
 		w.AddEntities(&entities.Actor{
-			Position: components.NewPosition(1, 1, 0),
+			Position: components.NewPosition(1, 1, 5),
 			Sprite:   components.NewSprite(assets.Images["dwarf"]),
-			Move:     components.NewMove(1, 1, 0),
+			Move:     components.NewMove(1, 1, 5),
 			Worker:   components.NewWorker(),
 		})
 	}
@@ -58,7 +74,7 @@ func (g *Game) Setup(w engine.World) {
 	// Input
 	cx, cy := ebiten.CursorPosition()
 	w.AddEntities(&entities.Input{
-		MousePos:    components.NewPosition(cx, cy, 0),
+		MousePos:    components.NewPosition(cx, cy, 5),
 		CursorImage: components.NewSprite(assets.Images["cursor"]),
 		Input:       components.NewInput(),
 	})
@@ -66,6 +82,6 @@ func (g *Game) Setup(w engine.World) {
 	// Camera
 	w.AddEntities(&entities.Camera{
 		Zoom:     components.NewZoom(),
-		Position: components.NewPosition(0, 0, 0),
+		Position: components.NewPosition(0, 0, 5),
 	})
 }

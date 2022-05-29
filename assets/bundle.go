@@ -15,9 +15,9 @@ import (
 var (
 	WorldWidth  = 100
 	WorldHeight = 100
-	WorldLevels = 1
+	WorldLevels = 10
 	CellSize    = 16
-	DwarfCount  = 7
+	DwarfCount  = 10
 
 	//go:embed resources/map.png
 	Tileset      []byte

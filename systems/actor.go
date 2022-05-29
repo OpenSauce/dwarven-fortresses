@@ -14,6 +14,7 @@ func NewActor() *Actor {
 }
 
 func (a *Actor) Update(w engine.World) {
+	var jobsToRemove []engine.Entity
 	view := w.View(components.Worker{}, components.Move{}, components.Position{})
 	view.Each(func(e engine.Entity) {
 		var worker *components.Worker
@@ -44,6 +45,7 @@ func (a *Actor) Update(w engine.World) {
 				move.Y = jp.Y
 				move.Z = jp.Z
 				task.Claimed = true
+				break
 			}
 		} else if move.Arrived {
 			job, found := w.GetEntity(worker.JobID)
@@ -53,7 +55,11 @@ func (a *Actor) Update(w engine.World) {
 
 			worker.HasJob = false
 			worker.TaskTypeEnum = enums.None
-			w.RemoveEntity(job)
+			jobsToRemove = append(jobsToRemove, job)
 		}
 	})
+
+	for _, job := range jobsToRemove {
+		w.RemoveEntity(job)
+	}
 }
