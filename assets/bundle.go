@@ -12,13 +12,15 @@ import (
 
 // This package is for loading all the images and storing world information
 
-var (
-	WorldWidth  = 100
-	WorldHeight = 100
-	WorldLevels = 10
-	CellSize    = 16
-	DwarfCount  = 10
+const (
+	WorldWidth         = 100
+	WorldHeight        = 100
+	WorldLevels        = 10
+	CellSize           = 16
+	StartingDwarfCount = 7
+)
 
+var (
 	//go:embed resources/map.png
 	Tileset      []byte
 	TilesetImage *ebiten.Image

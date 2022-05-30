@@ -1,6 +1,7 @@
 package systems
 
 import (
+	"fmt"
 	"math/rand"
 	"time"
 
@@ -33,7 +34,7 @@ func (n *Nature) Update(w engine.World) {
 	// Pick a random tile, if dirt, make grass
 	tiles := w.View(components.TileType{}, components.Position{}).Filter()
 	rand.Seed(time.Now().UnixNano())
-	r := 0 + rand.Intn(len(tiles)-0+1)
+	r := rand.Intn(len(tiles))
 
 	var tt *components.TileType
 	var pos *components.Position
@@ -48,7 +49,8 @@ func (n *Nature) Update(w engine.World) {
 			if tmPos.Z == pos.Z {
 				op := &ebiten.DrawImageOptions{}
 				op.GeoM.Translate(float64(pos.X*assets.CellSize), float64(pos.Y*assets.CellSize))
-				tmSprite.Image.DrawImage(assets.Images["grass0"], op)
+				r = rand.Intn(3)
+				tmSprite.Image.DrawImage(assets.Images[fmt.Sprintf("grass%d", r)], op)
 				break
 			}
 		}

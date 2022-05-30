@@ -1,7 +1,6 @@
 package scenes
 
 import (
-	"github.com/OpenSauce/paths"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/sedyh/mizu/pkg/engine"
 	"github.com/tomknightdev/dwarven-fortresses/assets"
@@ -12,7 +11,6 @@ import (
 )
 
 type Game struct {
-	grids map[int]*paths.Grid
 }
 
 func (g *Game) Setup(w engine.World) {
@@ -47,16 +45,23 @@ func (g *Game) Setup(w engine.World) {
 			op.GeoM.Translate(float64(t.X*assets.CellSize), float64(t.Y*assets.CellSize))
 			if z == 5 {
 				tmImage.DrawImage(assets.Images["dirt0"], op)
+				w.AddEntities(&entities.Tile{
+					Position: components.NewPosition(t.X, t.Y, t.Z),
+					TileType: components.NewTileType(enums.Dirt),
+				})
 			} else if z < 5 {
 				tmImage.DrawImage(assets.Images["rock"], op)
-
+				w.AddEntities(&entities.Tile{
+					Position: components.NewPosition(t.X, t.Y, t.Z),
+					TileType: components.NewTileType(enums.Rock),
+				})
+			} else {
+				w.AddEntities(&entities.Tile{
+					Position: components.NewPosition(t.X, t.Y, t.Z),
+					TileType: components.NewTileType(enums.Empty),
+				})
 			}
 
-			w.AddEntities(&entities.Tile{
-				Position: components.NewPosition(t.X, t.Y, t.Z),
-				// Sprite:   components.NewSprite(assets.Images["grass0"]),
-				TileType: components.NewTileType(enums.Dirt),
-			})
 		}
 		w.AddEntities(&entities.TileMap{
 			Sprite:   components.NewSprite(tmImage),
@@ -66,7 +71,7 @@ func (g *Game) Setup(w engine.World) {
 	}
 
 	// Actors
-	for i := 0; i < assets.DwarfCount; i++ {
+	for i := 0; i < assets.StartingDwarfCount; i++ {
 		w.AddEntities(&entities.Actor{
 			Position: components.NewPosition(1, 1, 5),
 			Sprite:   components.NewSprite(assets.Images["dwarf"]),

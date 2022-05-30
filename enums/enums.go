@@ -4,7 +4,8 @@ type TileTypeEnum int
 type TaskTypeEnum int
 
 const (
-	Dirt TileTypeEnum = iota
+	Empty TileTypeEnum = iota
+	Dirt
 	Grass
 	Rock
 	Water
