@@ -35,51 +35,32 @@ func (r *Render) Draw(w engine.World, screen *ebiten.Image) {
 	var camPos *components.Position
 	camera.Get(&zoom, &camPos)
 
-	// camXPos := int(camPos.X/int(zoom.Value)) / r.cellSize
-	// camYPos := int(camPos.Y/int(zoom.Value)) / r.cellSize
-
-	// camWidth := 500 / r.cellSize / int(zoom.Value)
-	// camHeight := 500 / r.cellSize / int(zoom.Value)
-
 	// Entities with position and sprite components
-	// var fifthLevel engine.Entity
 	view := w.View(components.Position{}, components.Sprite{})
 	view.Each(func(e engine.Entity) {
 		var pos *components.Position
 		var spr *components.Sprite
 		e.Get(&pos, &spr)
 
-		// if pos.Z == 5 && spr.Image.Bounds().Size().X > assets.CellSize {
-		// 	fifthLevel = e
-		// }
+		op := &ebiten.DrawImageOptions{}
 
-		if pos.Z != camPos.Z || camPos.Z > 5 {
+		if camPos.Z > 5 {
+			if pos.Z < 5 {
+				return
+			}
+
+			op.ColorM.Scale(1, 1, 1, 0.5)
+
+		} else if pos.Z != camPos.Z {
 			return
 		}
 
-		// if pos.Z != camPos.Z || pos.X < camXPos-camWidth || pos.X > camXPos+camWidth || pos.Y < camYPos-camHeight || pos.Y > camYPos+camHeight {
-		// 	return
-		// }
-
-		op := &ebiten.DrawImageOptions{}
 		op.GeoM.Translate(float64(pos.X*r.cellSize), float64(pos.Y*r.cellSize))
 		r.offscreen.DrawImage(spr.Image, op)
 	})
 
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Scale(zoom.Value, zoom.Value)
-
-	// if camPos.Z > 5 && fifthLevel != nil {
-	// 	var pos *components.Position
-	// 	var spr *components.Sprite
-	// 	fifthLevel.Get(&pos, &spr)
-
-	// 	op := &ebiten.DrawImageOptions{}
-	// 	op.GeoM.Translate(float64(pos.X*r.cellSize), float64(pos.Y*r.cellSize))
-	// 	r.offscreen.DrawImage(spr.Image, op)
-	// 	// This is how you adjust the ALPHA value
-	// 	op.ColorM.Scale(1, 1, 1, 0.5)
-	// }
 
 	ww, wh := ebiten.WindowSize()
 	op.GeoM.Translate(-float64(camPos.X-(ww/2)), -float64(camPos.Y-(wh/2)))
