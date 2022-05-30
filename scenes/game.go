@@ -26,6 +26,7 @@ func (g *Game) Setup(w engine.World) {
 		components.TileType{},
 		components.Task{},
 		components.Worker{},
+		components.TileMap{},
 	)
 
 	gameMap := components.NewGameMap(assets.WorldWidth, assets.WorldHeight, assets.WorldLevels, assets.CellSize)
@@ -34,7 +35,9 @@ func (g *Game) Setup(w engine.World) {
 		systems.NewRender(assets.WorldWidth, assets.WorldHeight, assets.CellSize, nil),
 		systems.NewPathfinder(gameMap.Grids),
 		systems.NewInput(),
-		systems.NewActor())
+		systems.NewActor(),
+		systems.NewNature(),
+	)
 
 	// World
 	for z := 0; z < assets.WorldLevels; z++ {
@@ -43,7 +46,7 @@ func (g *Game) Setup(w engine.World) {
 			op := &ebiten.DrawImageOptions{}
 			op.GeoM.Translate(float64(t.X*assets.CellSize), float64(t.Y*assets.CellSize))
 			if z == 5 {
-				tmImage.DrawImage(assets.Images["grass0"], op)
+				tmImage.DrawImage(assets.Images["dirt0"], op)
 			} else if z < 5 {
 				tmImage.DrawImage(assets.Images["rock"], op)
 
@@ -52,12 +55,13 @@ func (g *Game) Setup(w engine.World) {
 			w.AddEntities(&entities.Tile{
 				Position: components.NewPosition(t.X, t.Y, t.Z),
 				// Sprite:   components.NewSprite(assets.Images["grass0"]),
-				TileType: components.NewTileType(enums.Grass),
+				TileType: components.NewTileType(enums.Dirt),
 			})
 		}
 		w.AddEntities(&entities.TileMap{
 			Sprite:   components.NewSprite(tmImage),
 			Position: components.NewPosition(0, 0, z),
+			TileMap:  components.NewTileMap(),
 		})
 	}
 
