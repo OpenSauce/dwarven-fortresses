@@ -15,8 +15,10 @@ func NewActor() *Actor {
 
 func (a *Actor) Update(w engine.World) {
 	var jobsToRemove []engine.Entity
-	view := w.View(components.Worker{}, components.Move{}, components.Position{})
-	view.Each(func(e engine.Entity) {
+	jobs := w.View(components.Task{}, components.Position{}).Filter()
+
+	actors := w.View(components.Worker{}, components.Move{}, components.Position{})
+	actors.Each(func(e engine.Entity) {
 		var worker *components.Worker
 		var move *components.Move
 		var pos *components.Position
@@ -24,7 +26,6 @@ func (a *Actor) Update(w engine.World) {
 		e.Get(&worker, &move, &pos)
 
 		if !worker.HasJob {
-			jobs := w.View(components.Task{}, components.Position{}).Filter()
 			if len(jobs) == 0 {
 				return
 			}
