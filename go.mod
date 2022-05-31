@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/OpenSauce/paths v0.0.0-20220524183615-02108c8a273c
-	github.com/hajimehoshi/ebiten/v2 v2.3.3 
+	github.com/hajimehoshi/ebiten/v2 v2.3.3
 	github.com/sedyh/mizu v1.0.4
 )
 
