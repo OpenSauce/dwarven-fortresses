@@ -72,6 +72,10 @@ func (r *Render) Draw(w engine.World, screen *ebiten.Image) {
 	msg := fmt.Sprintf("TPS: %0.2f FPS: %0.2f\n",
 		ebiten.CurrentTPS(), ebiten.CurrentFPS())
 
-	msg += fmt.Sprintf("JOB COUNT: %d", len(w.View(components.Task{}).Filter()))
+	msg += fmt.Sprintf("JOB COUNT: %d\n", len(w.View(components.Task{}).Filter()))
+
+	x, y := ebiten.CursorPosition()
+	msg += fmt.Sprintf("MOUSE POS: %d:%d\n", x, y)
+
 	ebitenutil.DebugPrint(screen, msg)
 }

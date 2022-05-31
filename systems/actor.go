@@ -54,7 +54,7 @@ func (a *Actor) Update(w engine.World) {
 			}
 
 			worker.HasJob = false
-			worker.TaskTypeEnum = enums.None
+			worker.TaskTypeEnum = enums.TaskTypeNone
 			jobsToRemove = append(jobsToRemove, job)
 		}
 	})
