@@ -39,7 +39,7 @@ func (n *Nature) Update(w engine.World) {
 	var tt *components.TileType
 	var pos *components.Position
 	tiles[r].Get(&tt, &pos)
-	if tt.TileTypeEnum == enums.Dirt {
+	if tt.TileTypeEnum == enums.TileTypeDirt {
 		tileMap := w.View(components.TileMap{}, components.Sprite{}, components.Position{}).Filter()
 		for _, tm := range tileMap {
 			var tmPos *components.Position

@@ -25,6 +25,7 @@ func (g *Game) Setup(w engine.World) {
 		components.Task{},
 		components.Worker{},
 		components.TileMap{},
+		components.Gui{},
 	)
 
 	gameMap := components.NewGameMap(assets.WorldWidth, assets.WorldHeight, assets.WorldLevels, assets.CellSize)
@@ -35,40 +36,10 @@ func (g *Game) Setup(w engine.World) {
 		systems.NewInput(),
 		systems.NewActor(),
 		systems.NewNature(),
+		systems.NewGui(),
 	)
 
-	// World
-	for z := 0; z < assets.WorldLevels; z++ {
-		tmImage := ebiten.NewImage(assets.WorldWidth*assets.CellSize, assets.WorldHeight*assets.CellSize)
-		for _, t := range gameMap.Tiles[z] {
-			op := &ebiten.DrawImageOptions{}
-			op.GeoM.Translate(float64(t.X*assets.CellSize), float64(t.Y*assets.CellSize))
-			if z == 5 {
-				tmImage.DrawImage(assets.Images["dirt0"], op)
-				w.AddEntities(&entities.Tile{
-					Position: components.NewPosition(t.X, t.Y, t.Z),
-					TileType: components.NewTileType(enums.Dirt),
-				})
-			} else if z < 5 {
-				tmImage.DrawImage(assets.Images["rock"], op)
-				w.AddEntities(&entities.Tile{
-					Position: components.NewPosition(t.X, t.Y, t.Z),
-					TileType: components.NewTileType(enums.Rock),
-				})
-			} else {
-				w.AddEntities(&entities.Tile{
-					Position: components.NewPosition(t.X, t.Y, t.Z),
-					TileType: components.NewTileType(enums.Empty),
-				})
-			}
-
-		}
-		w.AddEntities(&entities.TileMap{
-			Sprite:   components.NewSprite(tmImage),
-			Position: components.NewPosition(0, 0, z),
-			TileMap:  components.NewTileMap(),
-		})
-	}
+	setupWorld(w, gameMap)
 
 	// Actors
 	for i := 0; i < assets.StartingDwarfCount; i++ {
@@ -84,7 +55,7 @@ func (g *Game) Setup(w engine.World) {
 	cx, cy := ebiten.CursorPosition()
 	w.AddEntities(&entities.Input{
 		MousePos:    components.NewPosition(cx, cy, 5),
-		CursorImage: components.NewSprite(assets.Images["cursor"]),
+		CursorImage: components.NewSprite(assets.Images["empty"]),
 		Input:       components.NewInput(),
 	})
 
@@ -92,5 +63,48 @@ func (g *Game) Setup(w engine.World) {
 	w.AddEntities(&entities.Camera{
 		Zoom:     components.NewZoom(),
 		Position: components.NewPosition(0, 0, 5),
+	})
+
+	setupGui(w)
+}
+
+func setupWorld(w engine.World, gameMap components.GameMap) {
+	for z := 0; z < assets.WorldLevels; z++ {
+		tmImage := ebiten.NewImage(assets.WorldWidth*assets.CellSize, assets.WorldHeight*assets.CellSize)
+		for _, t := range gameMap.Tiles[z] {
+			op := &ebiten.DrawImageOptions{}
+			op.GeoM.Translate(float64(t.X*assets.CellSize), float64(t.Y*assets.CellSize))
+			if z == 5 {
+				tmImage.DrawImage(assets.Images["dirt0"], op)
+				w.AddEntities(&entities.Tile{
+					Position: components.NewPosition(t.X, t.Y, t.Z),
+					TileType: components.NewTileType(enums.TileTypeDirt),
+				})
+			} else if z < 5 {
+				tmImage.DrawImage(assets.Images["rock"], op)
+				w.AddEntities(&entities.Tile{
+					Position: components.NewPosition(t.X, t.Y, t.Z),
+					TileType: components.NewTileType(enums.TileTypeRock),
+				})
+			} else {
+				w.AddEntities(&entities.Tile{
+					Position: components.NewPosition(t.X, t.Y, t.Z),
+					TileType: components.NewTileType(enums.TileTypeEmpty),
+				})
+			}
+
+		}
+		w.AddEntities(&entities.TileMap{
+			Sprite:   components.NewSprite(tmImage),
+			Position: components.NewPosition(0, 0, z),
+			TileMap:  components.NewTileMap(),
+		})
+	}
+}
+
+func setupGui(w engine.World) {
+	w.AddEntities(&entities.Gui{
+		Gui:    components.NewGui(10, 200, 3.0),
+		Sprite: components.NewSprite(assets.Images["stairdown"]),
 	})
 }

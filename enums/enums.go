@@ -2,16 +2,25 @@ package enums
 
 type TileTypeEnum int
 type TaskTypeEnum int
+type MouseModeEnum int
 
 const (
-	Empty TileTypeEnum = iota
-	Dirt
-	Grass
-	Rock
-	Water
+	TileTypeEmpty TileTypeEnum = iota
+	TileTypeDirt
+	TileTypeGrass
+	TileTypeRock
+	TileTypeWater
+)
 
-	None TaskTypeEnum = iota
-	MoveTo
-	Gather
-	Build
+const (
+	TaskTypeNone TaskTypeEnum = iota
+	TaskTypeMoveTo
+	TaskTypeGather
+	TaskTypeBuild
+)
+
+const (
+	MouseModeNone MouseModeEnum = iota
+	MouseModeBuild
+	MouseModeGather
 )

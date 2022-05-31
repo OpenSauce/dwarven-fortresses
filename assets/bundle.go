@@ -45,6 +45,8 @@ func init() {
 	}
 	TransTilesetImage = ebiten.NewImageFromImage(img)
 
+	Images["empty"] = TransTilesetImage.SubImage(image.Rect(0*CellSize, 0*CellSize, 1*CellSize, 1*CellSize)).(*ebiten.Image)
+
 	Images["cursor"] = TransTilesetImage.SubImage(image.Rect(29*CellSize, 14*CellSize, 30*CellSize, 15*CellSize)).(*ebiten.Image)
 
 	Images["rock"] = TilesetImage.SubImage(image.Rect(20*CellSize, 1*CellSize, 21*CellSize, 2*CellSize)).(*ebiten.Image)
@@ -66,4 +68,6 @@ func init() {
 	Images["water"] = TilesetImage.SubImage(image.Rect(14*CellSize, 5*CellSize, 15*CellSize, 6*CellSize)).(*ebiten.Image)
 
 	Images["dwarf"] = TransTilesetImage.SubImage(image.Rect(25*CellSize, 0*CellSize, 26*CellSize, 1*CellSize)).(*ebiten.Image)
+
+	Images["stairdown"] = TilesetImage.SubImage(image.Rect(3*CellSize, 6*CellSize, 4*CellSize, 7*CellSize)).(*ebiten.Image)
 }

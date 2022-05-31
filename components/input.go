@@ -1,6 +1,10 @@
 package components
 
-type Input struct{}
+import "github.com/tomknightdev/dwarven-fortresses/enums"
+
+type Input struct {
+	MouseMode enums.MouseModeEnum
+}
 
 func NewInput() Input {
 	return Input{}
