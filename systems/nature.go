@@ -12,15 +12,21 @@ import (
 	"github.com/tomknightdev/dwarven-fortresses/enums"
 )
 
+type GameMap interface {
+	GetTilesByType(enums.TileTypeEnum) []components.Position
+}
+
 type Nature struct {
 	GrowTimer        int
 	CurrentGrowTimer int
+	GameMap          GameMap
 }
 
-func NewNature() *Nature {
+func NewNature(gameMap GameMap) *Nature {
 	return &Nature{
 		GrowTimer:        100,
 		CurrentGrowTimer: 0,
+		GameMap:          gameMap,
 	}
 }
 
@@ -32,27 +38,23 @@ func (n *Nature) Update(w engine.World) {
 	n.CurrentGrowTimer = 0
 
 	// Pick a random tile, if dirt, make grass
-	tiles := w.View(components.TileType{}, components.Position{}).Filter()
+	tiles := n.GameMap.GetTilesByType(enums.TileTypeDirt)
 	rand.Seed(time.Now().UnixNano())
 	r := rand.Intn(len(tiles))
+	tile := tiles[r]
 
-	var tt *components.TileType
-	var pos *components.Position
-	tiles[r].Get(&tt, &pos)
-	if tt.TileTypeEnum == enums.TileTypeDirt {
-		tileMap := w.View(components.TileMap{}, components.Sprite{}, components.Position{}).Filter()
-		for _, tm := range tileMap {
-			var tmPos *components.Position
-			var tmSprite *components.Sprite
+	tileMap := w.View(components.TileMap{}, components.Sprite{}, components.Position{}).Filter()
+	for _, tm := range tileMap {
+		var tmPos *components.Position
+		var tmSprite *components.Sprite
 
-			tm.Get(&tmPos, &tmSprite)
-			if tmPos.Z == pos.Z {
-				op := &ebiten.DrawImageOptions{}
-				op.GeoM.Translate(float64(pos.X*assets.CellSize), float64(pos.Y*assets.CellSize))
-				r = rand.Intn(3)
-				tmSprite.Image.DrawImage(assets.Images[fmt.Sprintf("grass%d", r)], op)
-				break
-			}
+		tm.Get(&tmPos, &tmSprite)
+		if tmPos.Z == tile.Z {
+			op := &ebiten.DrawImageOptions{}
+			op.GeoM.Translate(float64(tile.X*assets.CellSize), float64(tile.Y*assets.CellSize))
+			r = rand.Intn(3)
+			tmSprite.Image.DrawImage(assets.Images[fmt.Sprintf("grass%d", r)], op)
+			break
 		}
 	}
 }
