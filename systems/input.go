@@ -66,8 +66,8 @@ func (i *Input) Update(w engine.World) {
 	mouseMode := input.MouseMode
 
 	// Check if mouse is over the gui
-	view := w.View(components.Gui{}, components.Sprite{}).Filter()
-	for _, g := range view {
+	guis := w.View(components.Gui{}, components.Sprite{}).Filter()
+	for _, g := range guis {
 		var gsp *components.Sprite
 		var gui *components.Gui
 		g.Get(&gsp, &gui)
