@@ -58,13 +58,14 @@ func (p *Pathfinder) Update(w engine.World) {
 			move.CurrentEnergy = 0
 			move.GettingRoute = false
 
-			for _, c := range move.CurrentPath.Cells {
+			for _, c := range move.CurrentPath.Cells[move.CurrentPath.CurrentIndex:] {
 				if !c.Walkable {
 					move.CurrentPath = nil
 					break
 				}
 			}
 		} else {
+			move.CurrentPath = nil
 			move.Arrived = true
 		}
 	}))
