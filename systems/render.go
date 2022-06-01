@@ -77,5 +77,7 @@ func (r *Render) Draw(w engine.World, screen *ebiten.Image) {
 	x, y := ebiten.CursorPosition()
 	msg += fmt.Sprintf("MOUSE POS: %d:%d\n", x, y)
 
+	msg += fmt.Sprintf("DRAW COUNT: %d\n", len(view.Filter()))
+
 	ebitenutil.DebugPrint(screen, msg)
 }

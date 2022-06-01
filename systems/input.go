@@ -41,9 +41,9 @@ func (i *Input) Update(w engine.World) {
 	// Zoom the camera
 	_, wy := ebiten.Wheel()
 	if wy > 0 && zoom.Value < 10 {
-		zoom.Value += 0.5
-	} else if wy < 0 && zoom.Value > 1.1 {
-		zoom.Value -= 0.5
+		zoom.Value += 0.1
+	} else if wy < 0 && zoom.Value > 0.2 {
+		zoom.Value -= 0.1
 	}
 
 	// Adjust camera z level
@@ -93,21 +93,11 @@ func (i *Input) Update(w engine.World) {
 	mousePos.Y = int((float64(cy) / zoom.Value) / float64(assets.CellSize))
 
 	if mouseMode != enums.MouseModeNone && inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) {
-		tiles := w.View(components.TileType{}, components.Position{}).Filter()
-		var tp *components.Position
-
-		for _, t := range tiles {
-			t.Get(&tp)
-			if tp.X == mousePos.X && tp.Y == mousePos.Y && tp.Z == camPos.Z {
-				w.AddEntities(&entities.Job{
-					Position: components.NewPosition(tp.X, tp.Y, tp.Z),
-					Task:     components.NewTask(enums.TaskTypeMoveTo),
-				})
-				break
-			}
-		}
+		w.AddEntities(&entities.Job{
+			Position: components.NewPosition(mousePos.X, mousePos.Y, camPos.Z),
+			Task:     components.NewTask(enums.TaskTypeMoveTo),
+		})
 	}
-
 }
 
 func setMouseMode(i *components.Input, s *components.Sprite, mouseMode enums.MouseModeEnum) {

@@ -93,10 +93,10 @@ func setupWorld(w engine.World, gameMap GameMap) {
 			if t.TileTypeEnum != enums.TileTypeEmpty {
 				tmImage.DrawImage(t.Image, op)
 			}
-			w.AddEntities(&entities.Tile{
-				Position: components.NewPosition(t.X, t.Y, t.Z),
-				TileType: components.NewTileType(t.TileTypeEnum),
-			})
+			// w.AddEntities(&entities.Tile{
+			// 	Position: components.NewPosition(t.X, t.Y, t.Z),
+			// 	TileType: components.NewTileType(t.TileTypeEnum),
+			// })
 		}
 		w.AddEntities(&entities.TileMap{
 			Sprite:   components.NewSprite(tmImage),
