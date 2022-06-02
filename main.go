@@ -20,7 +20,7 @@ func main() {
 	ebiten.SetWindowTitle("DWARVEN FORTRESSES")
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
 
-	g := engine.NewGame(scenes.NewGame(NewGameMap()))
+	g := engine.NewGame(scenes.NewGame())
 	if err := ebiten.RunGame(g); err != nil {
 		log.Fatal(err)
 	}

@@ -1,37 +1,28 @@
 package scenes
 
 import (
-	"github.com/OpenSauce/paths"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/sedyh/mizu/pkg/engine"
 	"github.com/tomknightdev/dwarven-fortresses/assets"
 	"github.com/tomknightdev/dwarven-fortresses/components"
 	"github.com/tomknightdev/dwarven-fortresses/entities"
 	"github.com/tomknightdev/dwarven-fortresses/enums"
+	"github.com/tomknightdev/dwarven-fortresses/helpers"
 	"github.com/tomknightdev/dwarven-fortresses/systems"
 )
 
-type GameMap interface {
-	GetGrids() map[int]*paths.Grid
-	GetTilesByZ(int) []struct {
-		components.Position
-		components.TileType
-		components.Sprite
-	}
-	GetTilesByType(enums.TileTypeEnum) []components.Position
-}
-
 type Game struct {
-	gameMap GameMap
+	gameMap systems.GameMap
 }
 
-func NewGame(gameMap GameMap) *Game {
-	return &Game{
-		gameMap: gameMap,
-	}
+func NewGame() *Game {
+	return &Game{}
 }
 
 func (g *Game) Setup(w engine.World) {
+
+	g.gameMap = helpers.NewGameMap(w)
+
 	w.AddComponents(
 		components.Position{},
 		components.Sprite{},
@@ -52,6 +43,7 @@ func (g *Game) Setup(w engine.World) {
 		systems.NewActor(),
 		systems.NewNature(g.gameMap),
 		systems.NewGui(),
+		systems.NewTileMap(),
 	)
 
 	setupWorld(w, g.gameMap)
@@ -83,7 +75,7 @@ func (g *Game) Setup(w engine.World) {
 	setupGui(w)
 }
 
-func setupWorld(w engine.World, gameMap GameMap) {
+func setupWorld(w engine.World, gameMap systems.GameMap) {
 	for z := 0; z < assets.WorldLevels; z++ {
 		tmImage := ebiten.NewImage(assets.WorldWidth*assets.CellSize, assets.WorldHeight*assets.CellSize)
 		for _, t := range gameMap.GetTilesByZ(z) {

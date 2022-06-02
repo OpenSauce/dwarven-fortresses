@@ -49,7 +49,7 @@ func init() {
 
 	Images["cursor"] = TransTilesetImage.SubImage(image.Rect(29*CellSize, 14*CellSize, 30*CellSize, 15*CellSize)).(*ebiten.Image)
 
-	Images["rock"] = TilesetImage.SubImage(image.Rect(20*CellSize, 1*CellSize, 21*CellSize, 2*CellSize)).(*ebiten.Image)
+	Images["rock"] = TilesetImage.SubImage(image.Rect(19*CellSize, 1*CellSize, 20*CellSize, 2*CellSize)).(*ebiten.Image)
 
 	Images["dirt0"] = TilesetImage.SubImage(image.Rect(0*CellSize, 0*CellSize, 1*CellSize, 1*CellSize)).(*ebiten.Image)
 	Images["dirt1"] = TilesetImage.SubImage(image.Rect(1*CellSize, 0*CellSize, 2*CellSize, 1*CellSize)).(*ebiten.Image)
