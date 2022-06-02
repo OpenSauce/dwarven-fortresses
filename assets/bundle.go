@@ -58,16 +58,16 @@ func init() {
 	Images["grass1"] = TilesetImage.SubImage(image.Rect(6*CellSize, 0*CellSize, 7*CellSize, 1*CellSize)).(*ebiten.Image)
 	Images["grass2"] = TilesetImage.SubImage(image.Rect(7*CellSize, 0*CellSize, 8*CellSize, 1*CellSize)).(*ebiten.Image)
 
-	Images["tree0"] = TilesetImage.SubImage(image.Rect(0*CellSize, 1*CellSize, 1*CellSize, 2*CellSize)).(*ebiten.Image)
-	Images["tree1"] = TilesetImage.SubImage(image.Rect(1*CellSize, 1*CellSize, 2*CellSize, 2*CellSize)).(*ebiten.Image)
-	Images["tree2"] = TilesetImage.SubImage(image.Rect(2*CellSize, 1*CellSize, 3*CellSize, 2*CellSize)).(*ebiten.Image)
-	Images["tree3"] = TilesetImage.SubImage(image.Rect(3*CellSize, 1*CellSize, 4*CellSize, 2*CellSize)).(*ebiten.Image)
-	Images["tree4"] = TilesetImage.SubImage(image.Rect(4*CellSize, 1*CellSize, 5*CellSize, 2*CellSize)).(*ebiten.Image)
-	Images["tree5"] = TilesetImage.SubImage(image.Rect(5*CellSize, 1*CellSize, 6*CellSize, 2*CellSize)).(*ebiten.Image)
+	Images["tree0"] = TransTilesetImage.SubImage(image.Rect(0*CellSize, 1*CellSize, 1*CellSize, 2*CellSize)).(*ebiten.Image)
+	Images["tree1"] = TransTilesetImage.SubImage(image.Rect(1*CellSize, 1*CellSize, 2*CellSize, 2*CellSize)).(*ebiten.Image)
+	Images["tree2"] = TransTilesetImage.SubImage(image.Rect(2*CellSize, 1*CellSize, 3*CellSize, 2*CellSize)).(*ebiten.Image)
+	Images["tree3"] = TransTilesetImage.SubImage(image.Rect(3*CellSize, 1*CellSize, 4*CellSize, 2*CellSize)).(*ebiten.Image)
+	Images["tree4"] = TransTilesetImage.SubImage(image.Rect(4*CellSize, 1*CellSize, 5*CellSize, 2*CellSize)).(*ebiten.Image)
+	Images["tree5"] = TransTilesetImage.SubImage(image.Rect(5*CellSize, 1*CellSize, 6*CellSize, 2*CellSize)).(*ebiten.Image)
 
-	Images["water"] = TilesetImage.SubImage(image.Rect(14*CellSize, 5*CellSize, 15*CellSize, 6*CellSize)).(*ebiten.Image)
+	Images["water"] = TransTilesetImage.SubImage(image.Rect(14*CellSize, 5*CellSize, 15*CellSize, 6*CellSize)).(*ebiten.Image)
 
 	Images["dwarf"] = TransTilesetImage.SubImage(image.Rect(25*CellSize, 0*CellSize, 26*CellSize, 1*CellSize)).(*ebiten.Image)
 
-	Images["stairdown"] = TilesetImage.SubImage(image.Rect(3*CellSize, 6*CellSize, 4*CellSize, 7*CellSize)).(*ebiten.Image)
+	Images["stairdown"] = TransTilesetImage.SubImage(image.Rect(3*CellSize, 6*CellSize, 4*CellSize, 7*CellSize)).(*ebiten.Image)
 }

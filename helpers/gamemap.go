@@ -3,6 +3,7 @@ package helpers
 import (
 	"fmt"
 	"math/rand"
+	"time"
 
 	"github.com/OpenSauce/paths"
 	"github.com/hajimehoshi/ebiten/v2"
@@ -18,9 +19,13 @@ type GameMap struct {
 		components.TileType
 		components.Sprite
 	}
-	TilesByType map[enums.TileTypeEnum][]components.Position
-	Grids       map[int]*paths.Grid
-	World       engine.World
+	TilesByType  map[enums.TileTypeEnum][]components.Position
+	ResourcesByZ map[int][]struct {
+		components.Position
+		components.Sprite
+	}
+	Grids map[int]*paths.Grid
+	World engine.World
 }
 
 func (gm GameMap) GetGrids() map[int]*paths.Grid {
@@ -33,6 +38,13 @@ func (gm GameMap) GetTilesByZ(z int) []struct {
 	components.Sprite
 } {
 	return gm.TilesByZ[z]
+}
+
+func (gm GameMap) GetResourcesByZ(z int) []struct {
+	components.Position
+	components.Sprite
+} {
+	return gm.ResourcesByZ[z]
 }
 
 func (gm GameMap) GetTilesByType(tt enums.TileTypeEnum) []components.Position {
@@ -49,9 +61,14 @@ func NewGameMap(world engine.World) GameMap {
 			components.Sprite
 		}{},
 		TilesByType: make(map[enums.TileTypeEnum][]components.Position),
-		World:       world,
+		ResourcesByZ: make(map[int][]struct {
+			components.Position
+			components.Sprite
+		}),
+		World: world,
 	}
 
+	// Setup world tiles
 	for z := 1; z <= assets.WorldLevels; z++ {
 		g := paths.NewGrid(assets.WorldWidth, assets.WorldHeight, assets.CellSize, assets.CellSize)
 		for x := 0; x < assets.WorldWidth; x++ {
@@ -86,6 +103,27 @@ func NewGameMap(world engine.World) GameMap {
 		w.Grids[z] = g
 	}
 
+	// Setup resource tiles
+	rand.Seed(time.Now().UnixNano())
+
+	for _, tile := range w.TilesByType[enums.TileTypeDirt] {
+		if rand.Intn(100) < 5 {
+			g := w.Grids[tile.Z]
+			c := g.Get(tile.X, tile.Y)
+			c.Walkable = false
+
+			t := struct {
+				components.Position
+				components.Sprite
+			}{
+				Position: components.NewPosition(tile.X, tile.Y, tile.Z),
+				Sprite:   components.NewSprite(assets.Images["tree0"]),
+			}
+
+			w.ResourcesByZ[tile.Z] = append(w.ResourcesByZ[tile.Z], t)
+		}
+	}
+
 	return w
 }
 
@@ -102,6 +140,8 @@ func (g GameMap) UpdateTile(fromTileType enums.TileTypeEnum, tileByTypeIndex int
 
 	tile := g.GetTilesByType(fromTileType)[tileByTypeIndex]
 	tileMap := g.World.View(components.TileMap{}, components.Sprite{}, components.Position{}).Filter()
+	rand.Seed(time.Now().UnixNano())
+
 	for _, tm := range tileMap {
 		var tmPos *components.Position
 		var tmSprite *components.Sprite
