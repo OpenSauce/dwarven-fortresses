@@ -1,8 +1,10 @@
 package enums
 
 type TileTypeEnum int
-type TaskTypeEnum int
-type MouseModeEnum int
+type InputModeEnum int
+type GuiActionEnum int
+type ResourceTypeEnum int
+type DropTypeEnum int
 
 const (
 	TileTypeEmpty TileTypeEnum = iota
@@ -13,14 +15,24 @@ const (
 )
 
 const (
-	TaskTypeNone TaskTypeEnum = iota
-	TaskTypeMoveTo
-	TaskTypeGather
-	TaskTypeBuild
+	InputModeNone InputModeEnum = iota
+	InputModeBuild
+	InputModeGather
+	InputModeChop
 )
 
 const (
-	MouseModeNone MouseModeEnum = iota
-	MouseModeBuild
-	MouseModeGather
+	GuiActionNone GuiActionEnum = iota
+	GuiActionChop
+	GuiActionStair
+)
+
+const (
+	ResourceTypeNone ResourceTypeEnum = iota
+	ResourceTypeTree
+)
+
+const (
+	DropTypeNone DropTypeEnum = iota
+	DropTypeLog
 )

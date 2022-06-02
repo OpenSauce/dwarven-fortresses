@@ -34,6 +34,9 @@ func (g *Game) Setup(w engine.World) {
 		components.Worker{},
 		components.TileMap{},
 		components.Gui{},
+		components.Resource{},
+		components.Choppable{},
+		components.Drops{},
 	)
 
 	w.AddSystems(
@@ -44,6 +47,7 @@ func (g *Game) Setup(w engine.World) {
 		systems.NewNature(g.gameMap),
 		systems.NewGui(),
 		systems.NewTileMap(),
+		systems.NewTask(),
 	)
 
 	setupWorld(w, g.gameMap)
@@ -99,9 +103,12 @@ func setupWorld(w engine.World, gameMap systems.GameMap) {
 
 		// Resources
 		for _, r := range gameMap.GetResourcesByZ(z) {
-			w.AddEntities(&entities.Resource{
-				Sprite:   r.Sprite,
-				Position: r.Position,
+			w.AddEntities(&entities.Tree{
+				Sprite:    r.Sprite,
+				Position:  r.Position,
+				Resource:  components.NewResource(),
+				Choppable: components.NewChoppable(),
+				Drops:     components.NewDrops(enums.DropTypeLog, 3),
 			})
 		}
 	}

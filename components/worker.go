@@ -4,7 +4,7 @@ import "github.com/tomknightdev/dwarven-fortresses/enums"
 
 type Worker struct {
 	HasJob bool
-	enums.TaskTypeEnum
+	enums.InputModeEnum
 	JobID int
 }
 

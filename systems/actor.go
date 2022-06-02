@@ -14,7 +14,6 @@ func NewActor() *Actor {
 }
 
 func (a *Actor) Update(w engine.World) {
-	var jobsToRemove []engine.Entity
 	jobs := w.View(components.Task{}, components.Position{}).Filter()
 
 	actors := w.View(components.Worker{}, components.Move{}, components.Position{})
@@ -41,7 +40,10 @@ func (a *Actor) Update(w engine.World) {
 
 				worker.HasJob = true
 				worker.JobID = job.ID()
-				worker.TaskTypeEnum = task.TaskTypeEnum
+				worker.InputModeEnum = task.InputModeEnum
+
+				move.Adjacent = true
+
 				move.X = jp.X
 				move.Y = jp.Y
 				move.Z = jp.Z
@@ -49,18 +51,28 @@ func (a *Actor) Update(w engine.World) {
 				break
 			}
 		} else if move.Arrived {
+			if move.CurrentEnergy < move.TotalEnergy {
+				move.CurrentEnergy++
+				return
+			}
+
 			job, found := w.GetEntity(worker.JobID)
 			if !found {
 				panic("arrived at location but job not found")
 			}
 
+			var task *components.Task
+			job.Get(&task)
+			if task.ActionsComplete < task.RequiredActions {
+				task.ActionsComplete++
+				move.CurrentEnergy = 0
+				return
+			}
+
+			task.CompleteTask()
 			worker.HasJob = false
-			worker.TaskTypeEnum = enums.TaskTypeNone
-			jobsToRemove = append(jobsToRemove, job)
+			worker.InputModeEnum = enums.InputModeNone
 		}
 	})
 
-	for _, job := range jobsToRemove {
-		w.RemoveEntity(job)
-	}
 }
