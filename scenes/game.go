@@ -41,7 +41,7 @@ func (g *Game) Setup(w engine.World) {
 
 	w.AddSystems(
 		systems.NewRender(assets.WorldWidth, assets.WorldHeight, assets.CellSize, nil),
-		systems.NewPathfinder(g.gameMap.GetGrids()),
+		systems.NewPathfinder(g.gameMap.GetGrids(), g.gameMap),
 		systems.NewInput(g.gameMap),
 		systems.NewActor(),
 		systems.NewNature(g.gameMap),

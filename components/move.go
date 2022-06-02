@@ -9,7 +9,10 @@ type Move struct {
 	CurrentEnergy int
 	TotalEnergy   int
 	GettingRoute  bool
-	CurrentPath   *paths.Path
+	CurrentPaths  []struct {
+		*paths.Path
+		Level int
+	}
 }
 
 func NewMove(x, y, z int) Move {

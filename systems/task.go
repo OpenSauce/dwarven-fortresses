@@ -53,11 +53,14 @@ func (t *Task) Update(w engine.World) {
 					Sprite:   components.NewSprite(assets.Images["stairdown"]),
 					TileType: components.NewTileType(enums.TileTypeStairDown),
 				})
+				t.GameMap.AddTileByType(enums.TileTypeStairDown, *pos)
 				w.AddEntities(&entities.Tile{
 					Position: components.NewPosition(pos.X, pos.Y, pos.Z-1),
 					Sprite:   components.NewSprite(assets.Images["stairup"]),
 					TileType: components.NewTileType(enums.TileTypeStairUp),
 				})
+				t.GameMap.AddTileByType(enums.TileTypeStairUp, components.NewPosition(pos.X, pos.Y, pos.Z-1))
+
 				index := t.GameMap.GetTileByTypeIndexFromPos(enums.TileTypeRock, components.NewPosition(pos.X, pos.Y, pos.Z-1))
 				t.GameMap.UpdateTile(enums.TileTypeRock, index, enums.TileTypeRockFloor)
 			}

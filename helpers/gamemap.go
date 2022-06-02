@@ -167,3 +167,7 @@ func (g GameMap) GetTileByTypeIndexFromPos(tt enums.TileTypeEnum, pos components
 
 	return -1
 }
+
+func (g GameMap) AddTileByType(tileType enums.TileTypeEnum, pos components.Position) {
+	g.TilesByType[tileType] = append(g.TilesByType[tileType], pos)
+}
