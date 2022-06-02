@@ -60,7 +60,7 @@ func (p *Pathfinder) Update(w engine.World) {
 				}
 
 				if path == nil {
-					move.Arrived = true
+					// move.Arrived = true
 					move.GettingRoute = false
 
 					return

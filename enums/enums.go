@@ -11,7 +11,10 @@ const (
 	TileTypeDirt
 	TileTypeGrass
 	TileTypeRock
+	TileTypeRockFloor
 	TileTypeWater
+	TileTypeStairDown
+	TileTypeStairUp
 )
 
 const (
@@ -19,12 +22,14 @@ const (
 	InputModeBuild
 	InputModeGather
 	InputModeChop
+	InputModeMine
 )
 
 const (
 	GuiActionNone GuiActionEnum = iota
 	GuiActionChop
 	GuiActionStair
+	GuiActionMine
 )
 
 const (

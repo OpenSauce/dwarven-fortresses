@@ -12,10 +12,13 @@ import (
 
 type Input struct {
 	MouseStart components.Position
+	GameMap    GameMap
 }
 
-func NewInput() *Input {
-	return &Input{}
+func NewInput(gameMap GameMap) *Input {
+	return &Input{
+		GameMap: gameMap,
+	}
 }
 
 func (i *Input) Update(w engine.World) {
@@ -80,21 +83,23 @@ func (i *Input) Update(w engine.World) {
 					inputMode = enums.InputModeBuild
 				case enums.GuiActionChop:
 					inputMode = enums.InputModeChop
+				case enums.GuiActionMine:
+					inputMode = enums.InputModeMine
 				}
 			}
 		}
 	}
 
-	ww, wh := ebiten.WindowSize()
-	cx = cx + (camPos.X - (ww / 2))
-	cy = cy + (camPos.Y - (wh / 2))
-
 	if inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonRight) {
 		setMouseMode(input, mouseSprite, enums.InputModeNone)
 	} else if input.InputMode != inputMode {
 		setMouseMode(input, mouseSprite, inputMode)
+		return
 	}
 
+	ww, wh := ebiten.WindowSize()
+	cx = cx + (camPos.X - (ww / 2))
+	cy = cy + (camPos.Y - (wh / 2))
 	mousePos.X = int((float64(cx) / zoom.Value) / float64(assets.CellSize))
 	mousePos.Y = int((float64(cy) / zoom.Value) / float64(assets.CellSize))
 
@@ -103,12 +108,6 @@ func (i *Input) Update(w engine.World) {
 	}
 
 	if inputMode != enums.InputModeNone && inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) {
-		var resources []engine.Entity
-		switch inputMode {
-		case enums.InputModeChop:
-			resources = w.View(components.Choppable{}, components.Position{}).Filter()
-		}
-
 		startX := i.MouseStart.X
 		startY := i.MouseStart.Y
 		endX := mousePos.X
@@ -126,21 +125,46 @@ func (i *Input) Update(w engine.World) {
 			startY = startY - endY
 		}
 
-		var rPos *components.Position
-		for _, r := range resources {
-			r.Get(&rPos)
-			for mx := startX; mx <= endX; mx++ {
-				for my := startY; my <= endY; my++ {
-					if rPos.X == mx && rPos.Y == my && rPos.Z == camPos.Z {
-						w.AddEntities(&entities.Job{
-							Position: components.NewPosition(mx, my, camPos.Z),
-							Task:     components.NewTask(inputMode, 10, r.ID()),
-						})
+		// var resources []engine.Entity
+		switch inputMode {
+		case enums.InputModeChop:
+			resources := w.View(components.Choppable{}, components.Position{}).Filter()
+			var rPos *components.Position
+			for _, r := range resources {
+				r.Get(&rPos)
+				for mx := startX; mx <= endX; mx++ {
+					for my := startY; my <= endY; my++ {
+						if rPos.X == mx && rPos.Y == my && rPos.Z == camPos.Z {
+							w.AddEntities(&entities.Job{
+								Position: components.NewPosition(mx, my, camPos.Z),
+								Task:     components.NewTask(inputMode, 10, r.ID()),
+							})
+						}
 					}
 				}
-			}
 
+			}
+		case enums.InputModeMine:
+			for mx := startX; mx <= endX; mx++ {
+				for my := startY; my <= endY; my++ {
+					index := i.GameMap.GetTileByTypeIndexFromPos(enums.TileTypeRock, components.NewPosition(mx, my, camPos.Z))
+					if index < 0 {
+						continue
+					}
+
+					w.AddEntities(&entities.Job{
+						Position: components.NewPosition(mx, my, camPos.Z),
+						Task:     components.NewTask(inputMode, 10, 0),
+					})
+				}
+			}
+		case enums.InputModeBuild:
+			w.AddEntities(&entities.Job{
+				Position: components.NewPosition(endX, endY, camPos.Z),
+				Task:     components.NewTask(inputMode, 10, 0),
+			})
 		}
+
 	}
 }
 

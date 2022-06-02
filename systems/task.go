@@ -9,10 +9,13 @@ import (
 )
 
 type Task struct {
+	GameMap GameMap
 }
 
-func NewTask() *Task {
-	return &Task{}
+func NewTask(gameMap GameMap) *Task {
+	return &Task{
+		GameMap: gameMap,
+	}
 }
 
 func (t *Task) Update(w engine.World) {
@@ -21,19 +24,19 @@ func (t *Task) Update(w engine.World) {
 
 	var task *components.Task
 	for _, job := range jobs {
-		job.Get(&task)
+		var pos *components.Position
+		job.Get(&task, &pos)
 
 		if task.Completed {
-			ent, ok := w.GetEntity(task.EntityID)
-			if !ok {
-				panic("entity not found")
-			}
-
 			switch task.InputModeEnum {
 			case enums.InputModeChop:
+				ent, ok := w.GetEntity(task.EntityID)
+				if !ok {
+					panic("entity not found")
+				}
+
 				var drop *components.Drops
-				var pos *components.Position
-				ent.Get(&drop, &pos)
+				ent.Get(&drop)
 
 				for i := 0; i < drop.DropCount; i++ {
 					w.AddEntities(&entities.Resource{
@@ -44,6 +47,19 @@ func (t *Task) Update(w engine.World) {
 				}
 
 				entitiesToRemove = append(entitiesToRemove, ent)
+			case enums.InputModeBuild:
+				w.AddEntities(&entities.Tile{
+					Position: *pos,
+					Sprite:   components.NewSprite(assets.Images["stairdown"]),
+					TileType: components.NewTileType(enums.TileTypeStairDown),
+				})
+				w.AddEntities(&entities.Tile{
+					Position: components.NewPosition(pos.X, pos.Y, pos.Z-1),
+					Sprite:   components.NewSprite(assets.Images["stairup"]),
+					TileType: components.NewTileType(enums.TileTypeStairUp),
+				})
+				index := t.GameMap.GetTileByTypeIndexFromPos(enums.TileTypeRock, components.NewPosition(pos.X, pos.Y, pos.Z-1))
+				t.GameMap.UpdateTile(enums.TileTypeRock, index, enums.TileTypeRockFloor)
 			}
 
 			entitiesToRemove = append(entitiesToRemove, job)

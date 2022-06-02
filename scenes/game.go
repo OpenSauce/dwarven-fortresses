@@ -42,12 +42,12 @@ func (g *Game) Setup(w engine.World) {
 	w.AddSystems(
 		systems.NewRender(assets.WorldWidth, assets.WorldHeight, assets.CellSize, nil),
 		systems.NewPathfinder(g.gameMap.GetGrids()),
-		systems.NewInput(),
+		systems.NewInput(g.gameMap),
 		systems.NewActor(),
 		systems.NewNature(g.gameMap),
 		systems.NewGui(),
 		systems.NewTileMap(),
-		systems.NewTask(),
+		systems.NewTask(g.gameMap),
 	)
 
 	setupWorld(w, g.gameMap)
@@ -122,5 +122,9 @@ func setupGui(w engine.World) {
 	w.AddEntities(&entities.Gui{
 		Gui:    components.NewGui(10, 250, 3.0, enums.GuiActionChop),
 		Sprite: components.NewSprite(assets.Images["tree0"]),
+	})
+	w.AddEntities(&entities.Gui{
+		Gui:    components.NewGui(10, 300, 3.0, enums.GuiActionMine),
+		Sprite: components.NewSprite(assets.Images["pickaxe"]),
 	})
 }
