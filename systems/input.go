@@ -11,6 +11,7 @@ import (
 )
 
 type Input struct {
+	MouseStart components.Position
 }
 
 func NewInput() *Input {
@@ -97,6 +98,10 @@ func (i *Input) Update(w engine.World) {
 	mousePos.X = int((float64(cx) / zoom.Value) / float64(assets.CellSize))
 	mousePos.Y = int((float64(cy) / zoom.Value) / float64(assets.CellSize))
 
+	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+		i.MouseStart = components.NewPosition(mousePos.X, mousePos.Y, camPos.Z)
+	}
+
 	if inputMode != enums.InputModeNone && inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) {
 		var resources []engine.Entity
 		switch inputMode {
@@ -104,16 +109,37 @@ func (i *Input) Update(w engine.World) {
 			resources = w.View(components.Choppable{}, components.Position{}).Filter()
 		}
 
+		startX := i.MouseStart.X
+		startY := i.MouseStart.Y
+		endX := mousePos.X
+		endY := mousePos.Y
+
+		if endX < startX {
+			startX = endX + startX
+			endX = startX - endX
+			startX = startX - endX
+		}
+
+		if endY < startY {
+			startY = endY + startY
+			endY = startY - endY
+			startY = startY - endY
+		}
+
 		var rPos *components.Position
 		for _, r := range resources {
 			r.Get(&rPos)
-			if rPos.X == mousePos.X && rPos.Y == mousePos.Y && rPos.Z == camPos.Z {
-				w.AddEntities(&entities.Job{
-					Position: components.NewPosition(mousePos.X, mousePos.Y, camPos.Z),
-					Task:     components.NewTask(inputMode, 10, r.ID()),
-				})
-				break
+			for mx := startX; mx <= endX; mx++ {
+				for my := startY; my <= endY; my++ {
+					if rPos.X == mx && rPos.Y == my && rPos.Z == camPos.Z {
+						w.AddEntities(&entities.Job{
+							Position: components.NewPosition(mx, my, camPos.Z),
+							Task:     components.NewTask(inputMode, 10, r.ID()),
+						})
+					}
+				}
 			}
+
 		}
 	}
 }
