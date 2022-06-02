@@ -13,6 +13,10 @@ type GameMap interface {
 		components.TileType
 		components.Sprite
 	}
+	GetResourcesByZ(int) []struct {
+		components.Position
+		components.Sprite
+	}
 	GetTilesByType(enums.TileTypeEnum) []components.Position
 	UpdateTile(enums.TileTypeEnum, int, enums.TileTypeEnum)
 }

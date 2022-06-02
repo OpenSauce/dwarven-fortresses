@@ -63,7 +63,7 @@ func (i *Input) Update(w engine.World) {
 	var mousePos *components.Position
 	var mouseSprite *components.Sprite
 	mouseInput.Get(&input, &mousePos, &mouseSprite)
-	mouseMode := input.MouseMode
+	inputMode := input.InputMode
 
 	// Check if mouse is over the gui
 	guis := w.View(components.Gui{}, components.Sprite{}).Filter()
@@ -74,7 +74,12 @@ func (i *Input) Update(w engine.World) {
 
 		if gui.Within(cx, cy) {
 			if inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) {
-				mouseMode = enums.MouseModeBuild
+				switch gui.Action {
+				case enums.GuiActionStair:
+					inputMode = enums.InputModeBuild
+				case enums.GuiActionChop:
+					inputMode = enums.InputModeChop
+				}
 			}
 		}
 	}
@@ -83,32 +88,47 @@ func (i *Input) Update(w engine.World) {
 	cx = cx + (camPos.X - (ww / 2))
 	cy = cy + (camPos.Y - (wh / 2))
 
-	if inpututil.IsKeyJustReleased(ebiten.KeyEscape) {
-		setMouseMode(input, mouseSprite, enums.MouseModeNone)
-	} else if input.MouseMode != mouseMode {
-		setMouseMode(input, mouseSprite, mouseMode)
+	if inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonRight) {
+		setMouseMode(input, mouseSprite, enums.InputModeNone)
+	} else if input.InputMode != inputMode {
+		setMouseMode(input, mouseSprite, inputMode)
 	}
 
 	mousePos.X = int((float64(cx) / zoom.Value) / float64(assets.CellSize))
 	mousePos.Y = int((float64(cy) / zoom.Value) / float64(assets.CellSize))
 
-	if mouseMode != enums.MouseModeNone && inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) {
-		w.AddEntities(&entities.Job{
-			Position: components.NewPosition(mousePos.X, mousePos.Y, camPos.Z),
-			Task:     components.NewTask(enums.TaskTypeMoveTo),
-		})
+	if inputMode != enums.InputModeNone && inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) {
+		var resources []engine.Entity
+		switch inputMode {
+		case enums.InputModeChop:
+			resources = w.View(components.Choppable{}, components.Position{}).Filter()
+		}
+
+		var rPos *components.Position
+		for _, r := range resources {
+			r.Get(&rPos)
+			if rPos.X == mousePos.X && rPos.Y == mousePos.Y && rPos.Z == camPos.Z {
+				w.AddEntities(&entities.Job{
+					Position: components.NewPosition(mousePos.X, mousePos.Y, camPos.Z),
+					Task:     components.NewTask(inputMode, 10, r.ID()),
+				})
+				break
+			}
+		}
 	}
 }
 
-func setMouseMode(i *components.Input, s *components.Sprite, mouseMode enums.MouseModeEnum) {
-	i.MouseMode = mouseMode
+func setMouseMode(i *components.Input, s *components.Sprite, mouseMode enums.InputModeEnum) {
+	i.InputMode = mouseMode
 
 	switch mouseMode {
-	case enums.MouseModeNone:
+	case enums.InputModeNone:
 		s.Image = assets.Images["empty"]
-	case enums.MouseModeGather:
+	case enums.InputModeGather:
 		s.Image = assets.Images["cursor"]
-	case enums.MouseModeBuild:
+	case enums.InputModeBuild:
 		s.Image = assets.Images["stairdown"]
+	case enums.InputModeChop:
+		s.Image = assets.Images["cursor"]
 	}
 }

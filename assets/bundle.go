@@ -17,7 +17,7 @@ const (
 	WorldHeight        = 200
 	WorldLevels        = 10
 	CellSize           = 16
-	StartingDwarfCount = 7
+	StartingDwarfCount = 1
 )
 
 var (
@@ -64,6 +64,8 @@ func init() {
 	Images["tree3"] = TransTilesetImage.SubImage(image.Rect(3*CellSize, 1*CellSize, 4*CellSize, 2*CellSize)).(*ebiten.Image)
 	Images["tree4"] = TransTilesetImage.SubImage(image.Rect(4*CellSize, 1*CellSize, 5*CellSize, 2*CellSize)).(*ebiten.Image)
 	Images["tree5"] = TransTilesetImage.SubImage(image.Rect(5*CellSize, 1*CellSize, 6*CellSize, 2*CellSize)).(*ebiten.Image)
+
+	Images["log0"] = TransTilesetImage.SubImage(image.Rect(20*CellSize, 6*CellSize, 21*CellSize, 7*CellSize)).(*ebiten.Image)
 
 	Images["water"] = TransTilesetImage.SubImage(image.Rect(14*CellSize, 5*CellSize, 15*CellSize, 6*CellSize)).(*ebiten.Image)
 
