@@ -77,6 +77,7 @@ func (g *Game) Setup(w engine.World) {
 
 func setupWorld(w engine.World, gameMap systems.GameMap) {
 	for z := 0; z < assets.WorldLevels; z++ {
+		// Tiles
 		tmImage := ebiten.NewImage(assets.WorldWidth*assets.CellSize, assets.WorldHeight*assets.CellSize)
 		for _, t := range gameMap.GetTilesByZ(z) {
 			op := &ebiten.DrawImageOptions{}
@@ -95,12 +96,24 @@ func setupWorld(w engine.World, gameMap systems.GameMap) {
 			Position: components.NewPosition(0, 0, z),
 			TileMap:  components.NewTileMap(),
 		})
+
+		// Resources
+		for _, r := range gameMap.GetResourcesByZ(z) {
+			w.AddEntities(&entities.Resource{
+				Sprite:   r.Sprite,
+				Position: r.Position,
+			})
+		}
 	}
 }
 
 func setupGui(w engine.World) {
 	w.AddEntities(&entities.Gui{
-		Gui:    components.NewGui(10, 200, 3.0),
+		Gui:    components.NewGui(10, 200, 3.0, enums.GuiActionStair),
 		Sprite: components.NewSprite(assets.Images["stairdown"]),
+	})
+	w.AddEntities(&entities.Gui{
+		Gui:    components.NewGui(10, 250, 3.0, enums.GuiActionChop),
+		Sprite: components.NewSprite(assets.Images["tree0"]),
 	})
 }
