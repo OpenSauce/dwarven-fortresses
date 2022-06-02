@@ -128,16 +128,6 @@ func NewGameMap(world engine.World) GameMap {
 }
 
 func (g GameMap) UpdateTile(fromTileType enums.TileTypeEnum, tileByTypeIndex int, newTileType enums.TileTypeEnum) {
-	// t.tileUpdateChan <- struct {
-	// 	tileByTypeIndex int
-	// 	newTileType     enums.TileTypeEnum
-	// 	fromTileType    enums.TileTypeEnum
-	// }{
-	// 	tileByTypeIndex: tileByTypeIndex,
-	// 	newTileType:     newTileType,
-	// 	fromTileType:    fromTileType,
-	// }
-
 	tile := g.GetTilesByType(fromTileType)[tileByTypeIndex]
 	tileMap := g.World.View(components.TileMap{}, components.Sprite{}, components.Position{}).Filter()
 	rand.Seed(time.Now().UnixNano())
@@ -150,13 +140,30 @@ func (g GameMap) UpdateTile(fromTileType enums.TileTypeEnum, tileByTypeIndex int
 		if tmPos.Z == tile.Z {
 			op := &ebiten.DrawImageOptions{}
 			op.GeoM.Translate(float64(tile.X*assets.CellSize), float64(tile.Y*assets.CellSize))
-			r := rand.Intn(3)
-			tmSprite.Image.DrawImage(assets.Images[fmt.Sprintf("grass%d", r)], op)
 
+			switch newTileType {
+			case enums.TileTypeGrass:
+				r := rand.Intn(3)
+				tmSprite.Image.DrawImage(assets.Images[fmt.Sprintf("grass%d", r)], op)
+			case enums.TileTypeRockFloor:
+				tmSprite.Image.DrawImage(assets.Images["rockfloor"], op)
+				cell := g.Grids[tile.Z].Get(tile.X*assets.CellSize, tile.Y*assets.CellSize)
+				cell.Walkable = true
+			}
 			// Update map
 			g.TilesByType[fromTileType] = append(g.TilesByType[fromTileType][:tileByTypeIndex], g.TilesByType[fromTileType][tileByTypeIndex+1:]...)
 			g.TilesByType[newTileType] = append(g.TilesByType[newTileType], tile)
 			break
 		}
 	}
+}
+
+func (g GameMap) GetTileByTypeIndexFromPos(tt enums.TileTypeEnum, pos components.Position) int {
+	for i, t := range g.TilesByType[tt] {
+		if t.X == pos.X && t.Y == pos.Y && t.Z == pos.Z {
+			return i
+		}
+	}
+
+	return -1
 }
