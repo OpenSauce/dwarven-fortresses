@@ -41,7 +41,7 @@ func (t *Task) Update(w engine.World) {
 				for i := 0; i < drop.DropCount; i++ {
 					w.AddEntities(&entities.Resource{
 						Position: *pos,
-						Sprite:   components.NewSprite(assets.Images["log0"]),
+						Sprite:   components.NewSprite(assets.Images["log0"], 0),
 						Resource: components.NewResource(),
 					})
 				}
@@ -50,15 +50,23 @@ func (t *Task) Update(w engine.World) {
 			case enums.InputModeBuild:
 				w.AddEntities(&entities.Tile{
 					Position: *pos,
-					Sprite:   components.NewSprite(assets.Images["stairdown"]),
+					Sprite:   components.NewSprite(assets.Images["stairdown"], 0),
 					TileType: components.NewTileType(enums.TileTypeStairDown),
 				})
+				t.GameMap.AddTileByType(enums.TileTypeStairDown, *pos)
+
+				index := t.GameMap.GetTileByTypeIndexFromPos(enums.TileTypeRock, components.NewPosition(pos.X, pos.Y, pos.Z-1))
+				t.GameMap.UpdateTile(enums.TileTypeRock, index, enums.TileTypeRockFloor)
+
 				w.AddEntities(&entities.Tile{
 					Position: components.NewPosition(pos.X, pos.Y, pos.Z-1),
-					Sprite:   components.NewSprite(assets.Images["stairup"]),
+					Sprite:   components.NewSprite(assets.Images["stairup"], 0),
 					TileType: components.NewTileType(enums.TileTypeStairUp),
 				})
-				index := t.GameMap.GetTileByTypeIndexFromPos(enums.TileTypeRock, components.NewPosition(pos.X, pos.Y, pos.Z-1))
+				t.GameMap.AddTileByType(enums.TileTypeStairUp, components.NewPosition(pos.X, pos.Y, pos.Z-1))
+
+			case enums.InputModeMine:
+				index := t.GameMap.GetTileByTypeIndexFromPos(enums.TileTypeRock, components.NewPosition(pos.X, pos.Y, pos.Z))
 				t.GameMap.UpdateTile(enums.TileTypeRock, index, enums.TileTypeRockFloor)
 			}
 
