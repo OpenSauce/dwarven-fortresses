@@ -66,6 +66,7 @@ func (p *Pathfinder) Update(w engine.World) {
 						if len(paths) > 0 {
 							if len(paths[0].Cells) == 0 {
 								log.Println("path with no cells found")
+								continue
 							}
 
 							break
@@ -155,7 +156,7 @@ func (p *Pathfinder) GetAdjacents(dest components.Move) []components.Position {
 
 	for x := -1; x < 2; x++ {
 		for y := -1; y < 2; y++ {
-			if x == dest.X && y == dest.Y || x < 0 || y < 0 || dest.X+x > assets.WorldWidth-1 || dest.Y+y > assets.WorldHeight-1 {
+			if (x == 0 && y == 0) || dest.X+x < 0 || dest.Y+y < 0 || dest.X+x > assets.WorldWidth-1 || dest.Y+y > assets.WorldHeight-1 {
 				continue
 			}
 
@@ -174,56 +175,6 @@ func Matches(a components.Position, b components.Position) bool {
 	}
 
 	return false
-}
-
-func (p Pathfinder) traverseLevel(paths []components.Path, travTiles map[bool][]components.Position, direction bool, startPos, finalDest components.Position) ([]components.Path, bool) {
-	for _, tt := range travTiles[direction] {
-		if tt.Z == startPos.Z {
-			// First thing to try is if we can reach final destination
-			if tt.Z == finalDest.Z {
-				path := p.grids[finalDest.Z].GetPath(float64(tt.X)*assets.CellSize, float64(tt.Y)*assets.CellSize, float64(finalDest.X)*assets.CellSize, float64(finalDest.Y)*assets.CellSize, true, false)
-
-				if path != nil {
-					paths = append(paths, components.Path{
-						Path:  path,
-						Level: startPos.Z,
-					})
-					return paths, true
-				}
-			}
-
-			path := p.grids[startPos.Z].GetPath(float64(startPos.X)*assets.CellSize, float64(startPos.Y)*assets.CellSize, float64(tt.X)*assets.CellSize, float64(tt.Y)*assets.CellSize, true, false)
-
-			if path != nil {
-				paths = append(paths, components.Path{
-					Path:  path,
-					Level: tt.Z,
-				})
-
-				if tt.Z > finalDest.Z {
-					direction = true
-				} else {
-					direction = false
-				}
-
-				// Final destination not found, next start pos will be the opposite stair in the same location
-				var nextTt components.Position
-				for _, nt := range travTiles[!direction] {
-					if nt.X == tt.X && nt.Y == tt.Y {
-						nextTt = nt
-						break
-					}
-				}
-
-				paths, reachedFinalDest := p.traverseLevel(paths, travTiles, !direction, nextTt, finalDest)
-				if reachedFinalDest {
-					return paths, reachedFinalDest
-				}
-			}
-		}
-	}
-
-	return nil, false
 }
 
 func (p Pathfinder) GetPath(startPos components.Position, endPos components.Position) []components.Path {
@@ -253,9 +204,74 @@ func (p Pathfinder) GetPath(startPos components.Position, endPos components.Posi
 	}
 
 	var paths []components.Path
-	paths, reached := p.traverseLevel(paths, travTiles, direction, startPos, endPos)
+	var reached bool
+	// Find route to each stair from current location, checking if each can get to final destination
+	for _, tt := range travTiles[direction] {
+		path := p.grids[startPos.Z].GetPath(float64(startPos.X)*assets.CellSize, float64(startPos.Y)*assets.CellSize, float64(tt.X)*assets.CellSize, float64(tt.Y)*assets.CellSize, true, false)
+
+		if path == nil {
+			continue
+		}
+
+		paths = append(paths, components.Path{
+			Path:  path,
+			Level: startPos.Z,
+		})
+
+		zChange := 1
+		if direction {
+			zChange = -1
+		}
+
+		paths, reached = p.traverseLevel(paths, travTiles[direction], direction, components.NewPosition(tt.X, tt.Y, tt.Z+zChange), endPos)
+		if reached {
+			return paths
+		}
+	}
+
 	if !reached {
 		panic("unable to reach final destination")
 	}
 	return paths
+}
+
+func (p Pathfinder) traverseLevel(paths []components.Path, travTiles []components.Position, direction bool, startPos, finalDest components.Position) ([]components.Path, bool) {
+	// First thing to try is if we can reach final destination
+	if startPos.Z == finalDest.Z {
+		path := p.grids[finalDest.Z].GetPath(float64(startPos.X)*assets.CellSize, float64(startPos.Y)*assets.CellSize, float64(finalDest.X)*assets.CellSize, float64(finalDest.Y)*assets.CellSize, true, false)
+
+		if path != nil {
+			paths = append(paths, components.Path{
+				Path:  path,
+				Level: startPos.Z,
+			})
+			return paths, true
+		}
+	}
+
+	for _, tt := range travTiles {
+		if tt.Z == startPos.Z {
+			path := p.grids[startPos.Z].GetPath(float64(startPos.X)*assets.CellSize, float64(startPos.Y)*assets.CellSize, float64(tt.X)*assets.CellSize, float64(tt.Y)*assets.CellSize, true, false)
+
+			if path != nil {
+				paths = append(paths, components.Path{
+					Path:  path,
+					Level: tt.Z,
+				})
+
+				// Final destination not found, next start pos will be the opposite stair in the same location
+				zChange := 1
+				if direction {
+					zChange = -1
+				}
+
+				paths, reachedFinalDest := p.traverseLevel(paths, travTiles, direction, components.NewPosition(tt.X, tt.Y, tt.Z+zChange), finalDest)
+				if reachedFinalDest {
+					return paths, reachedFinalDest
+				}
+			}
+		}
+	}
+
+	return nil, false
 }
