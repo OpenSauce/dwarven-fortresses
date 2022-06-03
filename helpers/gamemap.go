@@ -76,7 +76,7 @@ func NewGameMap(world engine.World) GameMap {
 				c := g.Get(x, y)
 				if x == 0 || x == assets.WorldWidth-1 || y == 0 || y == assets.WorldHeight-1 {
 
-					c.Walkable = false // There's a weird issue with pathfinding where it panics if the border cells are walkable
+					// c.Walkable = false // There's a weird issue with pathfinding where it panics if the border cells are walkable
 				}
 
 				t := struct {
@@ -161,14 +161,14 @@ func (g GameMap) UpdateTile(fromTileType enums.TileTypeEnum, tileByTypeIndex int
 	}
 }
 
-func (g GameMap) GetTileByTypeIndexFromPos(tt enums.TileTypeEnum, pos components.Position) int {
+func (g GameMap) GetTileByTypeIndexFromPos(tt enums.TileTypeEnum, pos components.Position) (int, error) {
 	for i, t := range g.TilesByType[tt] {
 		if t.X == pos.X && t.Y == pos.Y && t.Z == pos.Z {
-			return i
+			return i, nil
 		}
 	}
 
-	return -1
+	return 0, fmt.Errorf("unable to find %v at %v", tt, pos)
 }
 
 func (g GameMap) AddTileByType(tileType enums.TileTypeEnum, pos components.Position) {

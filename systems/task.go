@@ -1,6 +1,8 @@
 package systems
 
 import (
+	"log"
+
 	"github.com/sedyh/mizu/pkg/engine"
 	"github.com/tomknightdev/dwarven-fortresses/assets"
 	"github.com/tomknightdev/dwarven-fortresses/components"
@@ -55,7 +57,12 @@ func (t *Task) Update(w engine.World) {
 				})
 				t.GameMap.AddTileByType(enums.TileTypeStairDown, *pos)
 
-				index := t.GameMap.GetTileByTypeIndexFromPos(enums.TileTypeRock, components.NewPosition(pos.X, pos.Y, pos.Z-1))
+				index, err := t.GameMap.GetTileByTypeIndexFromPos(enums.TileTypeRock, components.NewPosition(pos.X, pos.Y, pos.Z-1))
+				if err != nil {
+					log.Println(err)
+					continue
+				}
+
 				t.GameMap.UpdateTile(enums.TileTypeRock, index, enums.TileTypeRockFloor)
 
 				w.AddEntities(&entities.Tile{
@@ -66,7 +73,11 @@ func (t *Task) Update(w engine.World) {
 				t.GameMap.AddTileByType(enums.TileTypeStairUp, components.NewPosition(pos.X, pos.Y, pos.Z-1))
 
 			case enums.InputModeMine:
-				index := t.GameMap.GetTileByTypeIndexFromPos(enums.TileTypeRock, components.NewPosition(pos.X, pos.Y, pos.Z))
+				index, err := t.GameMap.GetTileByTypeIndexFromPos(enums.TileTypeRock, components.NewPosition(pos.X, pos.Y, pos.Z))
+				if err != nil {
+					log.Println(err)
+					continue
+				}
 				t.GameMap.UpdateTile(enums.TileTypeRock, index, enums.TileTypeRockFloor)
 			}
 

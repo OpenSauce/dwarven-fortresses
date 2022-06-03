@@ -1,6 +1,8 @@
 package systems
 
 import (
+	"log"
+
 	"github.com/OpenSauce/paths"
 	"github.com/sedyh/mizu/pkg/engine"
 	"github.com/tomknightdev/dwarven-fortresses/assets"
@@ -62,6 +64,10 @@ func (p *Pathfinder) Update(w engine.World) {
 					for _, a := range adjacents {
 						paths = p.GetPath(*pos, a)
 						if len(paths) > 0 {
+							if len(paths[0].Cells) == 0 {
+								log.Println("path with no cells found")
+							}
+
 							break
 						}
 					}
@@ -102,25 +108,36 @@ func (p *Pathfinder) Update(w engine.World) {
 				move.CurrentPaths = paths
 			}
 
-			c := move.CurrentPaths[0].Next()
-			if c == nil {
-				move.CurrentPaths = move.CurrentPaths[1:]
-				pos.Z = move.CurrentPaths[0].Level
-				c = move.CurrentPaths[0].Current()
-			}
+			if move.CurrentPaths[0].AtEnd() {
+				if len(move.CurrentPaths) > 1 {
+					move.CurrentPaths = move.CurrentPaths[1:]
+					pos.Z = move.CurrentPaths[0].Level
 
-			pos.X = c.X
-			pos.Y = c.Y
-			move.CurrentPaths[0].Advance()
-			move.CurrentEnergy = 0
-			move.GettingRoute = false
-
-			for _, c := range move.CurrentPaths[0].Cells[move.CurrentPaths[0].CurrentIndex:] {
-				if !c.Walkable {
+				} else {
 					move.CurrentPaths = nil
-					break
+					move.Arrived = true
+				}
+			} else {
+				c := move.CurrentPaths[0].Next()
+
+				if c == nil {
+					panic("no next cell in path")
+				}
+
+				pos.X = c.X
+				pos.Y = c.Y
+				move.CurrentPaths[0].Advance()
+
+				for _, c := range move.CurrentPaths[0].Cells[move.CurrentPaths[0].CurrentIndex:] {
+					if !c.Walkable {
+						move.CurrentPaths = nil
+						break
+					}
 				}
 			}
+
+			move.CurrentEnergy = 0
+			move.GettingRoute = false
 		}
 	}))
 }
@@ -138,7 +155,7 @@ func (p *Pathfinder) GetAdjacents(dest components.Move) []components.Position {
 
 	for x := -1; x < 2; x++ {
 		for y := -1; y < 2; y++ {
-			if x == dest.X && y == dest.Y {
+			if x == dest.X && y == dest.Y || x < 0 || y < 0 || dest.X+x > assets.WorldWidth-1 || dest.Y+y > assets.WorldHeight-1 {
 				continue
 			}
 
@@ -164,7 +181,7 @@ func (p Pathfinder) traverseLevel(paths []components.Path, travTiles map[bool][]
 		if tt.Z == startPos.Z {
 			// First thing to try is if we can reach final destination
 			if tt.Z == finalDest.Z {
-				path := p.grids[finalDest.Z].GetPath(float64(tt.X)*assets.CellSize, float64(tt.Y)*assets.CellSize, float64(finalDest.X)*assets.CellSize, float64(finalDest.Y)*assets.CellSize, true, true)
+				path := p.grids[finalDest.Z].GetPath(float64(tt.X)*assets.CellSize, float64(tt.Y)*assets.CellSize, float64(finalDest.X)*assets.CellSize, float64(finalDest.Y)*assets.CellSize, true, false)
 
 				if path != nil {
 					paths = append(paths, components.Path{
@@ -175,7 +192,7 @@ func (p Pathfinder) traverseLevel(paths []components.Path, travTiles map[bool][]
 				}
 			}
 
-			path := p.grids[startPos.Z].GetPath(float64(startPos.X)*assets.CellSize, float64(startPos.Y)*assets.CellSize, float64(tt.X)*assets.CellSize, float64(tt.Y)*assets.CellSize, true, true)
+			path := p.grids[startPos.Z].GetPath(float64(startPos.X)*assets.CellSize, float64(startPos.Y)*assets.CellSize, float64(tt.X)*assets.CellSize, float64(tt.Y)*assets.CellSize, true, false)
 
 			if path != nil {
 				paths = append(paths, components.Path{
@@ -211,9 +228,9 @@ func (p Pathfinder) traverseLevel(paths []components.Path, travTiles map[bool][]
 
 func (p Pathfinder) GetPath(startPos components.Position, endPos components.Position) []components.Path {
 	if startPos.Z == endPos.Z {
-		path := p.grids[endPos.Z].GetPath(float64(startPos.X)*assets.CellSize, float64(startPos.Y)*assets.CellSize, float64(endPos.X)*assets.CellSize, float64(endPos.Y)*assets.CellSize, true, true)
+		path := p.grids[endPos.Z].GetPath(float64(startPos.X)*assets.CellSize, float64(startPos.Y)*assets.CellSize, float64(endPos.X)*assets.CellSize, float64(endPos.Y)*assets.CellSize, true, false)
 
-		if path != nil {
+		if path != nil && len(path.Cells) > 0 {
 			return []components.Path{
 				{
 					Path:  path,
@@ -224,8 +241,6 @@ func (p Pathfinder) GetPath(startPos components.Position, endPos components.Posi
 	}
 
 	// Use golden path approach, assume that the dwarf can reach the end pos from any stair
-	// nextStartPos := startPos
-
 	// true = down, false = up
 	travTiles := make(map[bool][]components.Position)
 
@@ -243,91 +258,4 @@ func (p Pathfinder) GetPath(startPos components.Position, endPos components.Posi
 		panic("unable to reach final destination")
 	}
 	return paths
-
-	///////////////////////////////
-	// lowestLevel := 0
-	// highestLevel := 0
-
-	// for _, su := range stairsUp {
-	// 	if su.Z < lowestLevel {
-	// 		lowestLevel = su.Z
-	// 	}
-	// }
-
-	// for _, sd := range stairsDown {
-	// 	if sd.Z > highestLevel {
-	// 		highestLevel = sd.Z
-	// 	}
-	// }
-
-	// nextEndPos := endPos
-
-	// var pathsToStairsUp []components.Path
-	// var pathToStairsDown []components.Path
-
-	// // Start from the highest level with a stair down, and get all routes from each stair to stair
-	// for z := highestLevel; z >= lowestLevel; z-- {
-	// 	// Iterate over each stair down and get route to it from current pos
-	// 	for _, sd := range stairsDown {
-	// 		if sd.Z == z {
-	// 			path := p.grids[z].GetPath(float64(nextStartPos.X)*assets.CellSize, float64(nextStartPos.Y)*assets.CellSize, float64(sd.X)*assets.CellSize, float64(sd.Y)*assets.CellSize, true, true)
-
-	// 			if path != nil {
-
-	// 			}
-	// 		}
-	// 	}
-
-	// 	// Get all stairs that are on same level and can reach end pos
-	// 	pathsToStairsUp, pathToStairsDown = p.navigateLevel(z, nextEndPos.X, nextEndPos.Y, stairsUp, stairsDown)
-	// }
-
-	// // Routes is a map of total cost and all paths between start and end positions
-	// routes := make(map[int][]components.Path)
-
-	// // This will define whether we go down or up in the search
-	// startZ := startPos.Z
-	// endZ := endPos.Z
-	// reverse := false
-
-	// if endZ > startZ {
-	// 	startZ = startZ + endZ
-	// 	endZ = startZ - endZ
-	// 	startZ = startZ - endZ
-	// 	reverse = true
-	// }
-
-	// return nil
-}
-
-func (p *Pathfinder) navigateLevel(x, y, z int, stairsUp, stairsDown []components.Position) ([]components.Path, []components.Path) {
-	// Get all stairs that are on same level and can reach end pos
-	var pathsToStairsUp []components.Path
-	for _, s := range stairsUp {
-		if s.Z == z {
-			path := p.grids[z].GetPath(float64(s.X)*assets.CellSize, float64(s.Y)*assets.CellSize, float64(x)*assets.CellSize, float64(y)*assets.CellSize, true, true)
-
-			if path != nil {
-				pathsToStairsUp = append(pathsToStairsUp, components.Path{
-					Path:  path,
-					Level: z,
-				})
-			}
-		}
-	}
-	var pathToStairsDown []components.Path
-	for _, s := range stairsDown {
-		if s.Z == z {
-			path := p.grids[z].GetPath(float64(s.X)*assets.CellSize, float64(s.Y)*assets.CellSize, float64(x)*assets.CellSize, float64(y)*assets.CellSize, true, true)
-
-			if path != nil {
-				pathToStairsDown = append(pathToStairsDown, components.Path{
-					Path:  path,
-					Level: z,
-				})
-			}
-		}
-	}
-
-	return pathsToStairsUp, pathToStairsDown
 }

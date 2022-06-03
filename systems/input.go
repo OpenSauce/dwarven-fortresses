@@ -1,6 +1,8 @@
 package systems
 
 import (
+	"log"
+
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/sedyh/mizu/pkg/engine"
@@ -104,11 +106,11 @@ func (i *Input) Update(w engine.World) {
 	mousePos.Y = int((float64(cy) / zoom.Value) / float64(assets.CellSize))
 	mousePos.Z = camPos.Z
 
-	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
-		if mousePos.X < 0 || mousePos.Y < 0 {
-			return
-		}
+	if mousePos.X < 0 || mousePos.Y < 0 {
+		return
+	}
 
+	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
 		i.MouseStart = components.NewPosition(mousePos.X, mousePos.Y, camPos.Z)
 	}
 
@@ -152,7 +154,12 @@ func (i *Input) Update(w engine.World) {
 		case enums.InputModeMine:
 			for mx := startX; mx <= endX; mx++ {
 				for my := startY; my <= endY; my++ {
-					index := i.GameMap.GetTileByTypeIndexFromPos(enums.TileTypeRock, components.NewPosition(mx, my, camPos.Z))
+					index, err := i.GameMap.GetTileByTypeIndexFromPos(enums.TileTypeRock, components.NewPosition(mx, my, camPos.Z))
+					if err != nil {
+						log.Println(err)
+						continue
+					}
+
 					if index < 0 {
 						continue
 					}
