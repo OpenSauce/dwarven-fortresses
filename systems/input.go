@@ -102,8 +102,13 @@ func (i *Input) Update(w engine.World) {
 	cy = cy + (camPos.Y - (wh / 2))
 	mousePos.X = int((float64(cx) / zoom.Value) / float64(assets.CellSize))
 	mousePos.Y = int((float64(cy) / zoom.Value) / float64(assets.CellSize))
+	mousePos.Z = camPos.Z
 
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+		if mousePos.X < 0 || mousePos.Y < 0 {
+			return
+		}
+
 		i.MouseStart = components.NewPosition(mousePos.X, mousePos.Y, camPos.Z)
 	}
 
@@ -180,5 +185,7 @@ func setMouseMode(i *components.Input, s *components.Sprite, mouseMode enums.Inp
 		s.Image = assets.Images["stairdown"]
 	case enums.InputModeChop:
 		s.Image = assets.Images["cursor"]
+	case enums.InputModeMine:
+		s.Image = assets.Images["pickaxe"]
 	}
 }

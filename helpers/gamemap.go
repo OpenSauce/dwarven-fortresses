@@ -73,8 +73,9 @@ func NewGameMap(world engine.World) GameMap {
 		g := paths.NewGrid(assets.WorldWidth, assets.WorldHeight, assets.CellSize, assets.CellSize)
 		for x := 0; x < assets.WorldWidth; x++ {
 			for y := 0; y < assets.WorldHeight; y++ {
+				c := g.Get(x, y)
 				if x == 0 || x == assets.WorldWidth-1 || y == 0 || y == assets.WorldHeight-1 {
-					c := g.Get(x, y)
+
 					c.Walkable = false // There's a weird issue with pathfinding where it panics if the border cells are walkable
 				}
 
@@ -92,8 +93,10 @@ func NewGameMap(world engine.World) GameMap {
 				} else if z < 5 {
 					t.TileType = components.NewTileType(enums.TileTypeRock)
 					t.Image = assets.Images["rock"]
+					c.Walkable = false
 				} else {
 					t.TileType = components.NewTileType(enums.TileTypeEmpty)
+					c.Walkable = false
 				}
 
 				w.TilesByZ[z] = append(w.TilesByZ[z], t)
@@ -117,7 +120,7 @@ func NewGameMap(world engine.World) GameMap {
 				components.Sprite
 			}{
 				Position: components.NewPosition(tile.X, tile.Y, tile.Z),
-				Sprite:   components.NewSprite(assets.Images["tree0"]),
+				Sprite:   components.NewSprite(assets.Images["tree0"], 0),
 			}
 
 			w.ResourcesByZ[tile.Z] = append(w.ResourcesByZ[tile.Z], t)
@@ -147,7 +150,7 @@ func (g GameMap) UpdateTile(fromTileType enums.TileTypeEnum, tileByTypeIndex int
 				tmSprite.Image.DrawImage(assets.Images[fmt.Sprintf("grass%d", r)], op)
 			case enums.TileTypeRockFloor:
 				tmSprite.Image.DrawImage(assets.Images["rockfloor"], op)
-				cell := g.Grids[tile.Z].Get(tile.X*assets.CellSize, tile.Y*assets.CellSize)
+				cell := g.Grids[tile.Z].Get(tile.X, tile.Y)
 				cell.Walkable = true
 			}
 			// Update map

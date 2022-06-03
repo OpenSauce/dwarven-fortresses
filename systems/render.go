@@ -36,11 +36,17 @@ func (r *Render) Draw(w engine.World, screen *ebiten.Image) {
 	camera.Get(&zoom, &camPos)
 
 	// Entities with position and sprite components
-	view := w.View(components.Position{}, components.Sprite{})
-	view.Each(func(e engine.Entity) {
+	var passedEnts []engine.Entity
+	ents := w.View(components.Position{}, components.Sprite{})
+	ents.Each(func(e engine.Entity) {
 		var pos *components.Position
 		var spr *components.Sprite
 		e.Get(&pos, &spr)
+
+		if spr.RenderOrder > 0 {
+			passedEnts = append(passedEnts, e)
+			return
+		}
 
 		op := &ebiten.DrawImageOptions{}
 
@@ -58,6 +64,28 @@ func (r *Render) Draw(w engine.World, screen *ebiten.Image) {
 		op.GeoM.Translate(float64(pos.X*r.cellSize), float64(pos.Y*r.cellSize))
 		r.offscreen.DrawImage(spr.Image, op)
 	})
+
+	for _, e := range passedEnts {
+		var pos *components.Position
+		var spr *components.Sprite
+		e.Get(&pos, &spr)
+
+		op := &ebiten.DrawImageOptions{}
+
+		if camPos.Z > 5 {
+			if pos.Z < 5 {
+				continue
+			}
+
+			op.ColorM.Scale(1, 1, 1, 0.5)
+
+		} else if pos.Z != camPos.Z {
+			continue
+		}
+
+		op.GeoM.Translate(float64(pos.X*r.cellSize), float64(pos.Y*r.cellSize))
+		r.offscreen.DrawImage(spr.Image, op)
+	}
 
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Scale(zoom.Value, zoom.Value)
@@ -77,7 +105,7 @@ func (r *Render) Draw(w engine.World, screen *ebiten.Image) {
 	x, y := ebiten.CursorPosition()
 	msg += fmt.Sprintf("MOUSE POS: %d:%d\n", x, y)
 
-	msg += fmt.Sprintf("DRAW COUNT: %d\n", len(view.Filter()))
+	msg += fmt.Sprintf("DRAW COUNT: %d\n", len(ents.Filter()))
 
 	ebitenutil.DebugPrint(screen, msg)
 }

@@ -13,11 +13,11 @@ import (
 // This package is for loading all the images and storing world information
 
 const (
-	WorldWidth         = 200
-	WorldHeight        = 200
+	WorldWidth         = 20
+	WorldHeight        = 20
 	WorldLevels        = 10
 	CellSize           = 16
-	StartingDwarfCount = 7
+	StartingDwarfCount = 1
 )
 
 var (
