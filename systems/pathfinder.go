@@ -27,6 +27,8 @@ func (p *Pathfinder) Update(w engine.World) {
 	var gmComp *components.GameMapSingleton
 	gms.Get(&gmComp)
 
+	pathCalcsForTick := 0
+
 	view := w.View(components.Move{}, components.Position{})
 	view.Each((func(e engine.Entity) {
 		var move *components.Move
@@ -55,6 +57,11 @@ func (p *Pathfinder) Update(w engine.World) {
 			move.Arrived = false
 
 			if move.CurrentPaths == nil {
+				// If there is a lot of entities, having too many looking for paths in one game tick will really hit TPS.  Limit to 10
+				if pathCalcsForTick == 9 {
+					return
+				}
+				pathCalcsForTick++
 				move.GettingRoute = true
 
 				var paths []components.Path

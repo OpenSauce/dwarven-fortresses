@@ -24,6 +24,11 @@ func (m *Mouse) Update(w engine.World) {
 	}
 	is.Get(&inputSingleton)
 
+	inputSingleton.SelectedTiles = nil
+	if inputSingleton.InGui {
+		return
+	}
+
 	mouse, found := w.View(components.Mouse{}, components.Position{}, components.Sprite{}).Get()
 	if !found {
 		return
@@ -60,7 +65,10 @@ func (m *Mouse) Update(w engine.World) {
 	if inputSingleton.InputMode != enums.InputModeNone {
 		if inputSingleton.IsMouseLeftPressed {
 			mComp.MouseStart = *p
-		} else if inputSingleton.IsMouseLeftReleased {
+		}
+
+		if inputSingleton.MouseLeftPressDuration {
+			mComp.SelectedTiles = nil
 			startX := mComp.MouseStart.X
 			startY := mComp.MouseStart.Y
 			endX := p.X
@@ -80,11 +88,14 @@ func (m *Mouse) Update(w engine.World) {
 
 			for mx := startX; mx <= endX; mx++ {
 				for my := startY; my <= endY; my++ {
-					inputSingleton.SelectedTiles = append(inputSingleton.SelectedTiles, components.NewPosition(mx, my, p.Z))
+					mComp.SelectedTiles = append(mComp.SelectedTiles, components.NewPosition(mx, my, p.Z))
 				}
 			}
-		} else {
-			inputSingleton.SelectedTiles = []components.Position{}
+		}
+
+		if inputSingleton.IsMouseLeftReleased {
+			inputSingleton.SelectedTiles = mComp.SelectedTiles
+			mComp.SelectedTiles = nil
 		}
 	}
 
@@ -98,6 +109,10 @@ func (m *Mouse) Draw(w engine.World, screen *ebiten.Image) {
 	}
 	is.Get(&inputSingleton)
 
+	if inputSingleton.InGui {
+		return
+	}
+
 	if inputSingleton.InputMode == enums.InputModeNone {
 		return
 	}
@@ -106,10 +121,10 @@ func (m *Mouse) Draw(w engine.World, screen *ebiten.Image) {
 	if !found {
 		return
 	}
-	var input *components.Mouse
+	var mComp *components.Mouse
 	var mousePos *components.Position
 	var mouseSprite *components.Sprite
-	mouseInput.Get(&input, &mousePos, &mouseSprite)
+	mouseInput.Get(&mComp, &mousePos, &mouseSprite)
 
 	if inputSingleton.MouseWorldPosX < 0 || inputSingleton.MouseWorldPosY < 0 {
 		return
@@ -130,7 +145,28 @@ func (m *Mouse) Draw(w engine.World, screen *ebiten.Image) {
 
 	helpers.DrawImage(w, screen, *mousePos, mouseSprite.Image)
 
-	// op := &ebiten.DrawImageOptions{}
-	// op.GeoM.Translate(float64(inputSingleton.MousePosX*assets.CellSize), float64(inputSingleton.MousePosY*assets.CellSize))
-	// screen.DrawImage(mouseSprite.Image, op)
+	if inputSingleton.MouseLeftPressDuration {
+		startX := mComp.MouseStart.X
+		startY := mComp.MouseStart.Y
+		endX := mousePos.X
+		endY := mousePos.Y
+
+		if endX < startX {
+			startX = endX + startX
+			endX = startX - endX
+			startX = startX - endX
+		}
+
+		if endY < startY {
+			startY = endY + startY
+			endY = startY - endY
+			startY = startY - endY
+		}
+
+		for mx := startX; mx <= endX; mx++ {
+			for my := startY; my <= endY; my++ {
+				helpers.DrawImage(w, screen, components.NewPosition(mx, my, mousePos.Z), mouseSprite.Image)
+			}
+		}
+	}
 }

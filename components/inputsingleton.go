@@ -4,16 +4,18 @@ import "github.com/tomknightdev/dwarven-fortresses/enums"
 
 type InputSingleton struct {
 	// Mouse values
-	IsMouseLeftPressed   bool
-	IsMouseLeftReleased  bool
-	IsMouseRightPressed  bool
-	IsMouseRightReleased bool
-	MouseWheel           float64
-	MousePosX            int
-	MousePosY            int
-	MouseWorldPosX       int
-	MouseWorldPosY       int
-	SelectedTiles        []Position
+	MouseLeftPressDuration bool
+	IsMouseLeftPressed     bool
+	IsMouseLeftReleased    bool
+	IsMouseRightPressed    bool
+	IsMouseRightReleased   bool
+	MouseWheel             float64
+	MousePosX              int
+	MousePosY              int
+	MouseWorldPosX         int
+	MouseWorldPosY         int
+	SelectedTiles          []Position
+	InGui                  bool
 
 	// Keyboard values
 	IsCameraLeftPressed  bool

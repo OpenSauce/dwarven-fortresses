@@ -3,6 +3,7 @@ package systems
 import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/sedyh/mizu/pkg/engine"
+	"github.com/tomknightdev/dwarven-fortresses/assets"
 	"github.com/tomknightdev/dwarven-fortresses/components"
 	"github.com/tomknightdev/dwarven-fortresses/enums"
 )
@@ -22,14 +23,17 @@ func (g *Gui) Update(w engine.World) {
 	}
 	is.Get(&inputSingleton)
 
-	if inputSingleton.IsMouseLeftPressed {
-		guis := w.View(components.Gui{}, components.Sprite{}).Filter()
-		for _, g := range guis {
-			var gsp *components.Sprite
-			var gui *components.Gui
-			g.Get(&gsp, &gui)
+	inputSingleton.InGui = false
 
-			if gui.Within(inputSingleton.MousePosX, inputSingleton.MousePosY) {
+	ents := w.View(components.Gui{}, components.Sprite{}).Filter()
+	for _, e := range ents {
+		var gsp *components.Sprite
+		var gui *components.Gui
+		e.Get(&gsp, &gui)
+
+		if g.Within(*gui, inputSingleton.MousePosX, inputSingleton.MousePosY) {
+			inputSingleton.InGui = true
+			if inputSingleton.IsMouseLeftPressed {
 				switch gui.Action {
 				case enums.GuiActionStair:
 					inputSingleton.InputMode = enums.InputModeBuild
@@ -56,4 +60,19 @@ func (g *Gui) Draw(w engine.World, screen *ebiten.Image) {
 		screen.DrawImage(sprite.Image, op)
 	})
 
+}
+
+func (g Gui) Within(gui components.Gui, x, y int) bool {
+	sx, sy := g.scalePos(gui)
+	if x > gui.X && x < sx && y > gui.Y && y < sy {
+		return true
+	}
+
+	return false
+}
+
+func (g Gui) scalePos(gui components.Gui) (int, int) {
+	x := gui.X + int(gui.Scale)*assets.CellSize
+	y := gui.Y + int(gui.Scale)*assets.CellSize
+	return x, y
 }

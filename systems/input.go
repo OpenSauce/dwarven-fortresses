@@ -65,6 +65,12 @@ func (i *Input) Update(w engine.World) {
 
 	inputSingleton.MousePosX, inputSingleton.MousePosY = ebiten.CursorPosition()
 
+	if inpututil.MouseButtonPressDuration(ebiten.MouseButtonLeft) > 0 {
+		inputSingleton.MouseLeftPressDuration = true
+	} else {
+		inputSingleton.MouseLeftPressDuration = false
+	}
+
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
 		inputSingleton.IsMouseLeftPressed = true
 	} else {
