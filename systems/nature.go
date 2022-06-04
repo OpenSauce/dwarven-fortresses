@@ -45,15 +45,7 @@ func (n *Nature) Update(w engine.World) {
 	rand.Seed(time.Now().UnixNano())
 	r := rand.Intn(len(tiles))
 
-	gmComp.TilesToUpdateChan <- struct {
-		FromTileType enums.TileTypeEnum
-		ToTileType   enums.TileTypeEnum
-		TileIndex    int
-	}{
-		enums.TileTypeDirt,
-		enums.TileTypeGrass,
-		r,
-	}
+	helpers.UpdateTile(w, enums.TileTypeDirt, enums.TileTypeGrass, r, gmComp)
 }
 
 func (n *Nature) Draw(w engine.World, screen *ebiten.Image) {
@@ -66,13 +58,4 @@ func (n *Nature) Draw(w engine.World, screen *ebiten.Image) {
 
 	ents := w.View(components.Nature{}, components.Sprite{}, components.Position{}).Filter()
 	helpers.DrawImages(w, screen, nc.OffScreen, ents)
-
-	// var s *components.Sprite
-	// var p *components.Position
-
-	// ents.Each(func(e engine.Entity) {
-	// 	e.Get(&s, &p)
-
-	// 	helpers.DrawImage(w, screen, *p, s.Image)
-	// })
 }

@@ -44,7 +44,7 @@ func (t *Task) Update(w engine.World) {
 			case enums.InputModeChop:
 				ent, ok := w.GetEntity(task.EntityID)
 				if !ok {
-					panic("entity not found")
+					log.Println("entity not found ", task.EntityID)
 				}
 
 				var drop *components.Drops
@@ -75,16 +75,7 @@ func (t *Task) Update(w engine.World) {
 					continue
 				}
 
-				gmComp.TilesToUpdateChan <- struct {
-					FromTileType enums.TileTypeEnum
-					ToTileType   enums.TileTypeEnum
-					TileIndex    int
-				}{
-
-					enums.TileTypeRock,
-					enums.TileTypeRockFloor,
-					index,
-				}
+				helpers.UpdateTile(w, enums.TileTypeRock, enums.TileTypeRockFloor, index, gmComp)
 
 				w.AddEntities(&entities.Building{
 					Position: components.NewPosition(pos.X, pos.Y, pos.Z-1),
@@ -103,15 +94,7 @@ func (t *Task) Update(w engine.World) {
 					continue
 				}
 
-				gmComp.TilesToUpdateChan <- struct {
-					FromTileType enums.TileTypeEnum
-					ToTileType   enums.TileTypeEnum
-					TileIndex    int
-				}{
-					enums.TileTypeRock,
-					enums.TileTypeRockFloor,
-					index,
-				}
+				helpers.UpdateTile(w, enums.TileTypeRock, enums.TileTypeRockFloor, index, gmComp)
 			}
 
 			entitiesToRemove = append(entitiesToRemove, job)

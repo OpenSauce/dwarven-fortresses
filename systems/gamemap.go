@@ -1,8 +1,6 @@
 package systems
 
 import (
-	"fmt"
-	"log"
 	"math/rand"
 	"time"
 
@@ -13,7 +11,6 @@ import (
 	"github.com/tomknightdev/dwarven-fortresses/components"
 	"github.com/tomknightdev/dwarven-fortresses/entities"
 	"github.com/tomknightdev/dwarven-fortresses/enums"
-	"github.com/tomknightdev/dwarven-fortresses/helpers"
 )
 
 type GameMap struct {
@@ -35,13 +32,6 @@ func (gm *GameMap) Update(w engine.World) {
 	if !gmComp.WorldGenerated {
 		generateWorld(w, gmComp)
 		gmComp.WorldGenerated = true
-	}
-
-	select {
-	case tu := <-gmComp.TilesToUpdateChan:
-		updateTile(w, tu.FromTileType, tu.ToTileType, tu.TileIndex, gmComp)
-	default:
-		break
 	}
 }
 
@@ -96,70 +86,70 @@ func (gm *GameMap) Draw(w engine.World, screen *ebiten.Image) {
 	gmComp.OffScreen.Clear()
 }
 
-func updateTile(w engine.World, fromTileType, newTileType enums.TileTypeEnum, tileByTypeIndex int, gmComp *components.GameMapSingleton) {
-	tile := gmComp.TilesByType[fromTileType][tileByTypeIndex]
-	tileMap := w.View(components.TileMap{}, components.Sprite{}, components.Position{}).Filter()
-	rand.Seed(time.Now().UnixNano())
+// func UpdateTile(w engine.World, fromTileType, newTileType enums.TileTypeEnum, tileByTypeIndex int, gmComp *components.GameMapSingleton) {
+// 	tile := gmComp.TilesByType[fromTileType][tileByTypeIndex]
+// 	tileMap := w.View(components.TileMap{}, components.Sprite{}, components.Position{}).Filter()
+// 	rand.Seed(time.Now().UnixNano())
 
-	for _, tm := range tileMap {
-		var tmPos *components.Position
-		var tmSprite *components.Sprite
+// 	for _, tm := range tileMap {
+// 		var tmPos *components.Position
+// 		var tmSprite *components.Sprite
 
-		tm.Get(&tmPos, &tmSprite)
-		if tmPos.Z == tile.Z {
-			op := &ebiten.DrawImageOptions{}
-			op.GeoM.Translate(float64(tile.X*assets.CellSize), float64(tile.Y*assets.CellSize))
+// 		tm.Get(&tmPos, &tmSprite)
+// 		if tmPos.Z == tile.Z {
+// 			op := &ebiten.DrawImageOptions{}
+// 			op.GeoM.Translate(float64(tile.X*assets.CellSize), float64(tile.Y*assets.CellSize))
 
-			switch newTileType {
-			case enums.TileTypeGrass:
-				r := rand.Intn(3)
-				tmSprite.Image.DrawImage(assets.Images[fmt.Sprintf("grass%d", r)], op)
-			case enums.TileTypeRockFloor:
-				tmSprite.Image.DrawImage(assets.Images["rockfloor"], op)
-				cell := gmComp.Grids[tile.Z].Get(tile.X, tile.Y)
-				cell.Walkable = true
-				updateAdjacentTiles(w, gmComp, tile, enums.TileTypeRockFloor)
-			case enums.TileTypeRock:
-				tmSprite.Image.DrawImage(assets.Images["rock"], op)
-			}
-			// Update maps
-			if fromTileType != newTileType {
-				gmComp.TilesByType[fromTileType] = append(gmComp.TilesByType[fromTileType][:tileByTypeIndex], gmComp.TilesByType[fromTileType][tileByTypeIndex+1:]...)
-				gmComp.TilesByType[newTileType] = append(gmComp.TilesByType[newTileType], tile)
-			}
-			break
-		}
-	}
-}
+// 			switch newTileType {
+// 			case enums.TileTypeGrass:
+// 				r := rand.Intn(3)
+// 				tmSprite.Image.DrawImage(assets.Images[fmt.Sprintf("grass%d", r)], op)
+// 			case enums.TileTypeRockFloor:
+// 				tmSprite.Image.DrawImage(assets.Images["rockfloor"], op)
+// 				cell := gmComp.Grids[tile.Z].Get(tile.X, tile.Y)
+// 				cell.Walkable = true
+// 				updateAdjacentTiles(w, gmComp, tile, enums.TileTypeRockFloor)
+// 			case enums.TileTypeRock:
+// 				tmSprite.Image.DrawImage(assets.Images["rock"], op)
+// 			}
+// 			// Update maps
+// 			if fromTileType != newTileType {
+// 				gmComp.TilesByType[fromTileType] = append(gmComp.TilesByType[fromTileType][:tileByTypeIndex], gmComp.TilesByType[fromTileType][tileByTypeIndex+1:]...)
+// 				gmComp.TilesByType[newTileType] = append(gmComp.TilesByType[newTileType], tile)
+// 			}
+// 			break
+// 		}
+// 	}
+// }
 
-func updateAdjacentTiles(w engine.World, gmComp *components.GameMapSingleton, tile components.Position, centreTileType enums.TileTypeEnum) {
-	for x := -1; x <= 1; x++ {
-		for y := -1; y <= 1; y++ {
-			if x == 0 && y == 0 {
-				continue
-			}
+// func updateAdjacentTiles(w engine.World, gmComp *components.GameMapSingleton, tile components.Position, centreTileType enums.TileTypeEnum) {
+// 	for x := -1; x <= 1; x++ {
+// 		for y := -1; y <= 1; y++ {
+// 			if x == 0 && y == 0 {
+// 				continue
+// 			}
 
-			currentTile := components.NewPosition(tile.X+x, tile.Y+y, tile.Z)
+// 			currentTile := components.NewPosition(tile.X+x, tile.Y+y, tile.Z)
 
-			if currentTile.X < 0 || currentTile.Y < 0 {
-				continue
-			}
+// 			if currentTile.X < 0 || currentTile.Y < 0 {
+// 				continue
+// 			}
 
-			cell := gmComp.Grids[currentTile.Z].Get(currentTile.X, currentTile.Y)
-			if cell.Walkable {
-				continue
-			}
+// 			cell := gmComp.Grids[currentTile.Z].Get(currentTile.X, currentTile.Y)
+// 			if cell.Walkable {
+// 				continue
+// 			}
 
-			if centreTileType == enums.TileTypeRockFloor {
-				index, err := helpers.GetTileByTypeIndexFromPos(currentTile, gmComp.TilesByType[enums.TileTypeRock])
-				if err != nil {
-					log.Printf("failed to find index for %v at %v\n", enums.TileTypeRock, currentTile)
-				}
-				updateTile(w, enums.TileTypeRock, enums.TileTypeRock, index, gmComp)
-			}
-		}
-	}
-}
+// 			if centreTileType == enums.TileTypeRockFloor {
+// 				index, err := helpers.GetTileByTypeIndexFromPos(currentTile, gmComp.TilesByType[enums.TileTypeRock])
+// 				if err != nil {
+// 					log.Printf("failed to find index for %v at %v\n", enums.TileTypeRock, currentTile)
+// 				}
+// 				UpdateTile(w, enums.TileTypeRock, enums.TileTypeRock, index, gmComp)
+// 			}
+// 		}
+// 	}
+// }
 
 func generateWorld(w engine.World, gms *components.GameMapSingleton) {
 	// Setup world tiles

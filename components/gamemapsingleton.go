@@ -20,17 +20,13 @@ type GameMapSingleton struct {
 		Position
 		Sprite
 	}
-	Grids             map[int]*paths.Grid
-	TilesToUpdateChan chan struct {
-		FromTileType enums.TileTypeEnum
-		ToTileType   enums.TileTypeEnum
-		TileIndex    int
-	}
+	Grids map[int]*paths.Grid
 }
 
 func NewGameMapSingleton() GameMapSingleton {
 	gm := GameMapSingleton{
-		Grids: make(map[int]*paths.Grid),
+		Grids:     make(map[int]*paths.Grid),
+		OffScreen: ebiten.NewImage(assets.WorldWidth*assets.CellSize, assets.WorldHeight*assets.CellSize),
 		TilesByZ: map[int][]struct {
 			Position
 			TileType
@@ -41,12 +37,6 @@ func NewGameMapSingleton() GameMapSingleton {
 			Position
 			Sprite
 		}),
-		TilesToUpdateChan: make(chan struct {
-			FromTileType enums.TileTypeEnum
-			ToTileType   enums.TileTypeEnum
-			TileIndex    int
-		}, 100),
-		OffScreen: ebiten.NewImage(assets.WorldWidth*assets.CellSize, assets.WorldHeight*assets.CellSize),
 	}
 
 	return gm
