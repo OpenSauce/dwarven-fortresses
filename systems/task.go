@@ -8,22 +8,32 @@ import (
 	"github.com/tomknightdev/dwarven-fortresses/components"
 	"github.com/tomknightdev/dwarven-fortresses/entities"
 	"github.com/tomknightdev/dwarven-fortresses/enums"
+	"github.com/tomknightdev/dwarven-fortresses/helpers"
 )
 
 type Task struct {
-	GameMap GameMap
 }
 
-func NewTask(gameMap GameMap) *Task {
-	return &Task{
-		GameMap: gameMap,
-	}
+func NewTask() *Task {
+	return &Task{}
 }
 
 func (t *Task) Update(w engine.World) {
 	jobs := w.View(components.Task{}).Filter()
-	var entitiesToRemove []engine.Entity
 
+	if len(jobs) == 0 {
+		return
+	}
+
+	gms, found := w.View(components.GameMapSingleton{}).Get()
+	if !found {
+		panic("game map singleton not found")
+	}
+
+	var gmComp *components.GameMapSingleton
+	gms.Get(&gmComp)
+
+	var entitiesToRemove []engine.Entity
 	var task *components.Task
 	for _, job := range jobs {
 		var pos *components.Position
@@ -34,53 +44,57 @@ func (t *Task) Update(w engine.World) {
 			case enums.InputModeChop:
 				ent, ok := w.GetEntity(task.EntityID)
 				if !ok {
-					panic("entity not found")
+					log.Println("entity not found ", task.EntityID)
 				}
 
 				var drop *components.Drops
 				ent.Get(&drop)
 
 				for i := 0; i < drop.DropCount; i++ {
-					w.AddEntities(&entities.Resource{
+					w.AddEntities(&entities.Item{
 						Position: *pos,
-						Sprite:   components.NewSprite(assets.Images["log0"], 0),
-						Resource: components.NewResource(),
+						Sprite:   components.NewSprite(assets.Images["log0"]),
+						Item:     components.NewItem(),
 					})
 				}
 
 				entitiesToRemove = append(entitiesToRemove, ent)
 			case enums.InputModeBuild:
-				w.AddEntities(&entities.Tile{
+				w.AddEntities(&entities.Building{
 					Position: *pos,
-					Sprite:   components.NewSprite(assets.Images["stairdown"], 0),
+					Sprite:   components.NewSprite(assets.Images["stairdown"]),
 					TileType: components.NewTileType(enums.TileTypeStairDown),
+					Building: components.NewBuilding(),
 				})
-				t.GameMap.AddTileByType(enums.TileTypeStairDown, *pos)
+				gmComp.TilesByType[enums.TileTypeStairDown] = append(gmComp.TilesByType[enums.TileTypeStairDown], *pos)
 
-				index, err := t.GameMap.GetTileByTypeIndexFromPos(enums.TileTypeRock, components.NewPosition(pos.X, pos.Y, pos.Z-1))
+				index, err := helpers.GetTileByTypeIndexFromPos(components.NewPosition(pos.X, pos.Y, pos.Z-1), gmComp.TilesByType[enums.TileTypeRock])
 				if err != nil {
 					log.Println(err)
 					entitiesToRemove = append(entitiesToRemove, job)
 					continue
 				}
 
-				t.GameMap.UpdateTile(enums.TileTypeRock, index, enums.TileTypeRockFloor)
+				helpers.UpdateTile(w, enums.TileTypeRock, enums.TileTypeRockFloor, index, gmComp)
 
-				w.AddEntities(&entities.Tile{
+				w.AddEntities(&entities.Building{
 					Position: components.NewPosition(pos.X, pos.Y, pos.Z-1),
-					Sprite:   components.NewSprite(assets.Images["stairup"], 0),
+					Sprite:   components.NewSprite(assets.Images["stairup"]),
 					TileType: components.NewTileType(enums.TileTypeStairUp),
+					Building: components.NewBuilding(),
 				})
-				t.GameMap.AddTileByType(enums.TileTypeStairUp, components.NewPosition(pos.X, pos.Y, pos.Z-1))
+				gmComp.TilesByType[enums.TileTypeStairUp] = append(gmComp.TilesByType[enums.TileTypeStairUp], components.NewPosition(pos.X, pos.Y, pos.Z-1))
 
 			case enums.InputModeMine:
-				index, err := t.GameMap.GetTileByTypeIndexFromPos(enums.TileTypeRock, components.NewPosition(pos.X, pos.Y, pos.Z))
+				index, err := helpers.GetTileByTypeIndexFromPos(components.NewPosition(pos.X, pos.Y, pos.Z),
+					gmComp.TilesByType[enums.TileTypeRock])
 				if err != nil {
 					log.Println(err)
 					entitiesToRemove = append(entitiesToRemove, job)
 					continue
 				}
-				t.GameMap.UpdateTile(enums.TileTypeRock, index, enums.TileTypeRockFloor)
+
+				helpers.UpdateTile(w, enums.TileTypeRock, enums.TileTypeRockFloor, index, gmComp)
 			}
 
 			entitiesToRemove = append(entitiesToRemove, job)

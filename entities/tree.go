@@ -8,4 +8,5 @@ type Tree struct {
 	components.Sprite
 	components.Resource
 	components.Drops
+	components.Nature
 }

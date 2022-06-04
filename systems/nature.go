@@ -4,35 +4,58 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/sedyh/mizu/pkg/engine"
+	"github.com/tomknightdev/dwarven-fortresses/components"
 	"github.com/tomknightdev/dwarven-fortresses/enums"
+	"github.com/tomknightdev/dwarven-fortresses/helpers"
 )
 
 type Nature struct {
-	GrowTimer        int
-	CurrentGrowTimer int
-	GameMap          GameMap
 }
 
-func NewNature(gameMap GameMap) *Nature {
-	return &Nature{
-		GrowTimer:        100,
-		CurrentGrowTimer: 0,
-		GameMap:          gameMap,
-	}
+func NewNature() *Nature {
+	return &Nature{}
 }
 
 func (n *Nature) Update(w engine.World) {
-	if n.CurrentGrowTimer < n.GrowTimer {
-		n.CurrentGrowTimer++
+	ne, found := w.View(components.NatureSingleton{}).Get()
+	if !found {
+		panic("unable to find entity with nature component")
+	}
+	var nc *components.NatureSingleton
+	ne.Get(&nc)
+
+	if nc.CurrentGrowTimer < nc.GrowTimer {
+		nc.CurrentGrowTimer++
 		return
 	}
-	n.CurrentGrowTimer = 0
+	nc.CurrentGrowTimer = 0
+
+	gms, found := w.View(components.GameMapSingleton{}).Get()
+	if !found {
+		panic("game map singleton not found")
+	}
+
+	var gmComp *components.GameMapSingleton
+	gms.Get(&gmComp)
 
 	// Pick a random tile, if dirt, make grass
-	tiles := n.GameMap.GetTilesByType(enums.TileTypeDirt)
+	tiles := gmComp.TilesByType[enums.TileTypeDirt]
 	rand.Seed(time.Now().UnixNano())
 	r := rand.Intn(len(tiles))
 
-	n.GameMap.UpdateTile(enums.TileTypeDirt, r, enums.TileTypeGrass)
+	helpers.UpdateTile(w, enums.TileTypeDirt, enums.TileTypeGrass, r, gmComp)
+}
+
+func (n *Nature) Draw(w engine.World, screen *ebiten.Image) {
+	ne, found := w.View(components.NatureSingleton{}).Get()
+	if !found {
+		panic("unable to find entity with nature component")
+	}
+	var nc *components.NatureSingleton
+	ne.Get(&nc)
+
+	ents := w.View(components.Nature{}, components.Sprite{}, components.Position{}).Filter()
+	helpers.DrawImages(w, screen, nc.OffScreen, ents)
 }

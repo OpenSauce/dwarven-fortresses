@@ -2,7 +2,9 @@ package entities
 
 import "github.com/tomknightdev/dwarven-fortresses/components"
 
-type Camera struct {
-	components.Zoom
+type Building struct {
+	components.Building
 	components.Position
+	components.Sprite
+	components.TileType
 }
