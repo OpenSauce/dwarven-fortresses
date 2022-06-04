@@ -9,23 +9,24 @@ import (
 	"github.com/tomknightdev/dwarven-fortresses/components"
 	"github.com/tomknightdev/dwarven-fortresses/entities"
 	"github.com/tomknightdev/dwarven-fortresses/enums"
+	"github.com/tomknightdev/dwarven-fortresses/helpers"
 )
 
 type Pathfinder struct {
-	grids   map[int]*paths.Grid
-	GameMap GameMap
 }
 
-func NewPathfinder(grids map[int]*paths.Grid, gameMap GameMap) *Pathfinder {
-	p := &Pathfinder{
-		grids:   grids,
-		GameMap: gameMap,
-	}
-
-	return p
+func NewPathfinder() *Pathfinder {
+	return &Pathfinder{}
 }
 
 func (p *Pathfinder) Update(w engine.World) {
+	gms, found := w.View(components.GameMapSingleton{}).Get()
+	if !found {
+		panic("game map singleton not found")
+	}
+	var gmComp *components.GameMapSingleton
+	gms.Get(&gmComp)
+
 	view := w.View(components.Move{}, components.Position{})
 	view.Each((func(e engine.Entity) {
 		var move *components.Move
@@ -41,7 +42,7 @@ func (p *Pathfinder) Update(w engine.World) {
 			return
 		}
 
-		if (move.Adjacent && IsAdjacent(*move, *pos)) || p.GameMap.Matches(components.NewPosition(move.X, move.Y, move.Z), *pos) {
+		if (move.Adjacent && helpers.IsAdjacent(*move, *pos)) || helpers.Matches(components.NewPosition(move.X, move.Y, move.Z), *pos) {
 			if len(move.CurrentPaths) > 1 {
 				move.CurrentPaths = move.CurrentPaths[1:]
 				pos.Z = move.CurrentPaths[0].Level
@@ -59,10 +60,10 @@ func (p *Pathfinder) Update(w engine.World) {
 				var paths []components.Path
 
 				if move.Adjacent {
-					adjacents := p.GetAdjacents(*move)
+					adjacents := helpers.GetAdjacents(gmComp.Grids[move.Z], components.NewPosition(move.X, move.Y, move.Z), true)
 
 					for _, a := range adjacents {
-						paths = p.GetPath(*pos, a)
+						paths = p.GetPath(*pos, a, gmComp.Grids, gmComp.TilesByType)
 						if len(paths) > 0 {
 							if len(paths[0].Cells) == 0 {
 								log.Println("path with no cells found")
@@ -96,7 +97,7 @@ func (p *Pathfinder) Update(w engine.World) {
 					}
 
 				} else {
-					paths = p.GetPath(*pos, components.NewPosition(move.X, move.Y, move.Z))
+					paths = p.GetPath(*pos, components.NewPosition(move.X, move.Y, move.Z), gmComp.Grids, gmComp.TilesByType)
 				}
 
 				if len(paths) == 0 {
@@ -142,35 +143,9 @@ func (p *Pathfinder) Update(w engine.World) {
 	}))
 }
 
-func IsAdjacent(dest components.Move, current components.Position) bool {
-	if current.X >= dest.X-1 && current.X <= dest.X+1 && current.Y >= dest.Y-1 && current.Y <= dest.Y+1 && current.Z == dest.Z {
-		return true
-	}
-
-	return false
-}
-
-func (p *Pathfinder) GetAdjacents(dest components.Move) []components.Position {
-	var adjacents []components.Position
-
-	for x := -1; x < 2; x++ {
-		for y := -1; y < 2; y++ {
-			if (x == 0 && y == 0) || dest.X+x < 0 || dest.Y+y < 0 || dest.X+x > assets.WorldWidth-1 || dest.Y+y > assets.WorldHeight-1 {
-				continue
-			}
-
-			if p.grids[dest.Z].Get(dest.X+x, dest.Y+y).Walkable {
-				adjacents = append(adjacents, components.NewPosition(dest.X+x, dest.Y+y, dest.Z))
-			}
-		}
-	}
-
-	return adjacents
-}
-
-func (p Pathfinder) GetPath(startPos components.Position, endPos components.Position) []components.Path {
+func (p Pathfinder) GetPath(startPos components.Position, endPos components.Position, grids map[int]*paths.Grid, tileByType map[enums.TileTypeEnum][]components.Position) []components.Path {
 	if startPos.Z == endPos.Z {
-		path := p.grids[endPos.Z].GetPath(float64(startPos.X)*assets.CellSize, float64(startPos.Y)*assets.CellSize, float64(endPos.X)*assets.CellSize, float64(endPos.Y)*assets.CellSize, true, false)
+		path := grids[endPos.Z].GetPath(float64(startPos.X)*assets.CellSize, float64(startPos.Y)*assets.CellSize, float64(endPos.X)*assets.CellSize, float64(endPos.Y)*assets.CellSize, true, false)
 
 		if path != nil && len(path.Cells) > 0 {
 			return []components.Path{
@@ -186,8 +161,8 @@ func (p Pathfinder) GetPath(startPos components.Position, endPos components.Posi
 	// true = down, false = up
 	travTiles := make(map[bool][]components.Position)
 
-	travTiles[false] = append(travTiles[false], p.GameMap.GetTilesByType(enums.TileTypeStairUp)...)
-	travTiles[true] = append(travTiles[true], p.GameMap.GetTilesByType(enums.TileTypeStairDown)...)
+	travTiles[false] = append(travTiles[false], tileByType[enums.TileTypeStairUp]...)
+	travTiles[true] = append(travTiles[true], tileByType[enums.TileTypeStairDown]...)
 
 	direction := true
 	if endPos.Z > startPos.Z {
@@ -198,7 +173,7 @@ func (p Pathfinder) GetPath(startPos components.Position, endPos components.Posi
 	var reached bool
 	// Find route to each stair from current location, checking if each can get to final destination
 	for _, tt := range travTiles[direction] {
-		path := p.grids[startPos.Z].GetPath(float64(startPos.X)*assets.CellSize, float64(startPos.Y)*assets.CellSize, float64(tt.X)*assets.CellSize, float64(tt.Y)*assets.CellSize, true, false)
+		path := grids[startPos.Z].GetPath(float64(startPos.X)*assets.CellSize, float64(startPos.Y)*assets.CellSize, float64(tt.X)*assets.CellSize, float64(tt.Y)*assets.CellSize, true, false)
 
 		if path == nil {
 			continue
@@ -214,22 +189,23 @@ func (p Pathfinder) GetPath(startPos components.Position, endPos components.Posi
 			zChange = -1
 		}
 
-		paths, reached = p.traverseLevel(paths, travTiles[direction], direction, components.NewPosition(tt.X, tt.Y, tt.Z+zChange), endPos)
+		paths, reached = p.traverseLevel(paths, travTiles[direction], direction, components.NewPosition(tt.X, tt.Y, tt.Z+zChange), endPos, grids)
 		if reached {
 			return paths
 		}
 	}
 
 	if !reached {
-		panic("unable to reach final destination")
+		log.Println("unable to reach final destination")
+		return nil
 	}
 	return paths
 }
 
-func (p Pathfinder) traverseLevel(paths []components.Path, travTiles []components.Position, direction bool, startPos, finalDest components.Position) ([]components.Path, bool) {
+func (p Pathfinder) traverseLevel(paths []components.Path, travTiles []components.Position, direction bool, startPos, finalDest components.Position, grids map[int]*paths.Grid) ([]components.Path, bool) {
 	// First thing to try is if we can reach final destination
 	if startPos.Z == finalDest.Z {
-		path := p.grids[finalDest.Z].GetPath(float64(startPos.X)*assets.CellSize, float64(startPos.Y)*assets.CellSize, float64(finalDest.X)*assets.CellSize, float64(finalDest.Y)*assets.CellSize, true, false)
+		path := grids[finalDest.Z].GetPath(float64(startPos.X)*assets.CellSize, float64(startPos.Y)*assets.CellSize, float64(finalDest.X)*assets.CellSize, float64(finalDest.Y)*assets.CellSize, true, false)
 
 		if path != nil {
 			paths = append(paths, components.Path{
@@ -242,7 +218,7 @@ func (p Pathfinder) traverseLevel(paths []components.Path, travTiles []component
 
 	for _, tt := range travTiles {
 		if tt.Z == startPos.Z {
-			path := p.grids[startPos.Z].GetPath(float64(startPos.X)*assets.CellSize, float64(startPos.Y)*assets.CellSize, float64(tt.X)*assets.CellSize, float64(tt.Y)*assets.CellSize, true, false)
+			path := grids[startPos.Z].GetPath(float64(startPos.X)*assets.CellSize, float64(startPos.Y)*assets.CellSize, float64(tt.X)*assets.CellSize, float64(tt.Y)*assets.CellSize, true, false)
 
 			if path != nil {
 				paths = append(paths, components.Path{
@@ -256,7 +232,7 @@ func (p Pathfinder) traverseLevel(paths []components.Path, travTiles []component
 					zChange = -1
 				}
 
-				paths, reachedFinalDest := p.traverseLevel(paths, travTiles, direction, components.NewPosition(tt.X, tt.Y, tt.Z+zChange), finalDest)
+				paths, reachedFinalDest := p.traverseLevel(paths, travTiles, direction, components.NewPosition(tt.X, tt.Y, tt.Z+zChange), finalDest, grids)
 				if reachedFinalDest {
 					return paths, reachedFinalDest
 				}

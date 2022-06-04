@@ -3,10 +3,9 @@ package components
 import "github.com/hajimehoshi/ebiten/v2"
 
 type Sprite struct {
-	Image       *ebiten.Image
-	RenderOrder int
+	Image *ebiten.Image
 }
 
-func NewSprite(image *ebiten.Image, renderOrder int) Sprite {
-	return Sprite{image, renderOrder}
+func NewSprite(image *ebiten.Image) Sprite {
+	return Sprite{image}
 }
