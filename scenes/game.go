@@ -87,7 +87,7 @@ func setupWorld(w engine.World, gameMap systems.GameMap) {
 			op := &ebiten.DrawImageOptions{}
 			op.GeoM.Translate(float64(t.X*assets.CellSize), float64(t.Y*assets.CellSize))
 
-			if t.TileTypeEnum != enums.TileTypeEmpty {
+			if t.Image != nil {
 				tmImage.DrawImage(t.Image, op)
 			}
 			// w.AddEntities(&entities.Tile{

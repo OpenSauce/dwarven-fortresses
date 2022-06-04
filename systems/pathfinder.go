@@ -41,7 +41,7 @@ func (p *Pathfinder) Update(w engine.World) {
 			return
 		}
 
-		if (move.Adjacent && IsAdjacent(*move, *pos)) || Matches(components.NewPosition(move.X, move.Y, move.Z), *pos) {
+		if (move.Adjacent && IsAdjacent(*move, *pos)) || p.GameMap.Matches(components.NewPosition(move.X, move.Y, move.Z), *pos) {
 			if len(move.CurrentPaths) > 1 {
 				move.CurrentPaths = move.CurrentPaths[1:]
 				pos.Z = move.CurrentPaths[0].Level
@@ -97,7 +97,6 @@ func (p *Pathfinder) Update(w engine.World) {
 
 				} else {
 					paths = p.GetPath(*pos, components.NewPosition(move.X, move.Y, move.Z))
-					// path = p.grids[pos.Z].GetPath(float64(pos.X*assets.CellSize), float64(pos.Y*assets.CellSize), float64(move.X*assets.CellSize), float64(move.Y*assets.CellSize), true, true)
 				}
 
 				if len(paths) == 0 {
@@ -167,14 +166,6 @@ func (p *Pathfinder) GetAdjacents(dest components.Move) []components.Position {
 	}
 
 	return adjacents
-}
-
-func Matches(a components.Position, b components.Position) bool {
-	if a.X == b.X && a.Y == b.Y && a.Z == b.Z {
-		return true
-	}
-
-	return false
 }
 
 func (p Pathfinder) GetPath(startPos components.Position, endPos components.Position) []components.Path {

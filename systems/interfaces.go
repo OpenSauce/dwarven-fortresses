@@ -21,4 +21,5 @@ type GameMap interface {
 	UpdateTile(enums.TileTypeEnum, int, enums.TileTypeEnum)
 	GetTileByTypeIndexFromPos(enums.TileTypeEnum, components.Position) (int, error)
 	AddTileByType(enums.TileTypeEnum, components.Position)
+	Matches(components.Position, components.Position) bool
 }

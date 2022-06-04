@@ -60,6 +60,7 @@ func (t *Task) Update(w engine.World) {
 				index, err := t.GameMap.GetTileByTypeIndexFromPos(enums.TileTypeRock, components.NewPosition(pos.X, pos.Y, pos.Z-1))
 				if err != nil {
 					log.Println(err)
+					entitiesToRemove = append(entitiesToRemove, job)
 					continue
 				}
 
@@ -76,6 +77,7 @@ func (t *Task) Update(w engine.World) {
 				index, err := t.GameMap.GetTileByTypeIndexFromPos(enums.TileTypeRock, components.NewPosition(pos.X, pos.Y, pos.Z))
 				if err != nil {
 					log.Println(err)
+					entitiesToRemove = append(entitiesToRemove, job)
 					continue
 				}
 				t.GameMap.UpdateTile(enums.TileTypeRock, index, enums.TileTypeRockFloor)

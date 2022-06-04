@@ -2,6 +2,7 @@ package helpers
 
 import (
 	"fmt"
+	"log"
 	"math/rand"
 	"time"
 
@@ -74,11 +75,6 @@ func NewGameMap(world engine.World) GameMap {
 		for x := 0; x < assets.WorldWidth; x++ {
 			for y := 0; y < assets.WorldHeight; y++ {
 				c := g.Get(x, y)
-				if x == 0 || x == assets.WorldWidth-1 || y == 0 || y == assets.WorldHeight-1 {
-
-					// c.Walkable = false // There's a weird issue with pathfinding where it panics if the border cells are walkable
-				}
-
 				t := struct {
 					components.Position
 					components.TileType
@@ -92,7 +88,7 @@ func NewGameMap(world engine.World) GameMap {
 					t.Image = assets.Images["dirt0"]
 				} else if z < 5 {
 					t.TileType = components.NewTileType(enums.TileTypeRock)
-					t.Image = assets.Images["rock"]
+					// t.Image = assets.Images["rock"]
 					c.Walkable = false
 				} else {
 					t.TileType = components.NewTileType(enums.TileTypeEmpty)
@@ -152,10 +148,15 @@ func (g GameMap) UpdateTile(fromTileType enums.TileTypeEnum, tileByTypeIndex int
 				tmSprite.Image.DrawImage(assets.Images["rockfloor"], op)
 				cell := g.Grids[tile.Z].Get(tile.X, tile.Y)
 				cell.Walkable = true
+				g.UpdateAdjacentTiles(tile, enums.TileTypeRockFloor)
+			case enums.TileTypeRock:
+				tmSprite.Image.DrawImage(assets.Images["rock"], op)
 			}
-			// Update map
-			g.TilesByType[fromTileType] = append(g.TilesByType[fromTileType][:tileByTypeIndex], g.TilesByType[fromTileType][tileByTypeIndex+1:]...)
-			g.TilesByType[newTileType] = append(g.TilesByType[newTileType], tile)
+			// Update maps
+			if fromTileType != newTileType {
+				g.TilesByType[fromTileType] = append(g.TilesByType[fromTileType][:tileByTypeIndex], g.TilesByType[fromTileType][tileByTypeIndex+1:]...)
+				g.TilesByType[newTileType] = append(g.TilesByType[newTileType], tile)
+			}
 			break
 		}
 	}
@@ -171,6 +172,65 @@ func (g GameMap) GetTileByTypeIndexFromPos(tt enums.TileTypeEnum, pos components
 	return 0, fmt.Errorf("unable to find %v at %v", tt, pos)
 }
 
+// func (g GameMap) GetTileByZIndexFromPos(z int, pos components.Position) (int, error) {
+// 	for i, t := range g.TilesByZ[z] {
+// 		if g.Matches(t.Position, pos) {
+// 			return i, nil
+// 		}
+// 	}
+
+// 	return 0, fmt.Errorf("unable to find %v at %v", pos, z)
+// }
+
+func (g GameMap) GetTileTypeFromPos(pos components.Position) (enums.TileTypeEnum, bool) {
+	for tt, t := range g.TilesByType {
+		for _, p := range t {
+			if g.Matches(pos, p) {
+				return tt, true
+			}
+		}
+	}
+
+	return enums.TileTypeEmpty, false
+}
+
 func (g GameMap) AddTileByType(tileType enums.TileTypeEnum, pos components.Position) {
 	g.TilesByType[tileType] = append(g.TilesByType[tileType], pos)
+}
+
+func (g GameMap) UpdateAdjacentTiles(tile components.Position, centreTileType enums.TileTypeEnum) {
+	for x := -1; x <= 1; x++ {
+		for y := -1; y <= 1; y++ {
+			if x == 0 && y == 0 {
+				continue
+			}
+
+			currentTile := components.NewPosition(tile.X+x, tile.Y+y, tile.Z)
+
+			if currentTile.X < 0 || currentTile.Y < 0 {
+				continue
+			}
+
+			cell := g.Grids[currentTile.Z].Get(currentTile.X, currentTile.Y)
+			if cell.Walkable {
+				continue
+			}
+
+			if centreTileType == enums.TileTypeRockFloor {
+				index, err := g.GetTileByTypeIndexFromPos(enums.TileTypeRock, currentTile)
+				if err != nil {
+					log.Printf("failed to find index for %v at %v\n", enums.TileTypeRock, currentTile)
+				}
+				g.UpdateTile(enums.TileTypeRock, index, enums.TileTypeRock)
+			}
+		}
+	}
+}
+
+func (g GameMap) Matches(a components.Position, b components.Position) bool {
+	if a.X == b.X && a.Y == b.Y && a.Z == b.Z {
+		return true
+	}
+
+	return false
 }

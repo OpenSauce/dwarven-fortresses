@@ -1,6 +1,8 @@
 package systems
 
 import (
+	"log"
+
 	"github.com/sedyh/mizu/pkg/engine"
 	"github.com/tomknightdev/dwarven-fortresses/components"
 	"github.com/tomknightdev/dwarven-fortresses/enums"
@@ -58,7 +60,10 @@ func (a *Actor) Update(w engine.World) {
 
 			job, found := w.GetEntity(worker.JobID)
 			if !found {
-				panic("arrived at location but job not found")
+				log.Println("arrived at location but job not found")
+				worker.HasJob = false
+				worker.InputModeEnum = enums.InputModeNone
+				return
 			}
 
 			var task *components.Task

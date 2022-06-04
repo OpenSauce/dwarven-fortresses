@@ -17,7 +17,7 @@ const (
 	WorldHeight        = 200
 	WorldLevels        = 10
 	CellSize           = 16
-	StartingDwarfCount = 7
+	StartingDwarfCount = 70
 )
 
 var (

@@ -23,7 +23,6 @@ func NewNature(gameMap GameMap) *Nature {
 }
 
 func (n *Nature) Update(w engine.World) {
-	return
 	if n.CurrentGrowTimer < n.GrowTimer {
 		n.CurrentGrowTimer++
 		return
