@@ -26,6 +26,10 @@ func (i *Item) Draw(w engine.World, screen *ebiten.Image) {
 	ents.Each(func(e engine.Entity) {
 		e.Get(&p, &s)
 
+		if !s.Drawn {
+			return
+		}
+
 		helpers.DrawImage(w, screen, *p, s.Image)
 	})
 }

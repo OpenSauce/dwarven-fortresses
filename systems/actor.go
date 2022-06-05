@@ -18,7 +18,7 @@ func NewActor() *Actor {
 }
 
 func (a *Actor) Update(w engine.World) {
-	jobs := w.View(components.Task{}, components.Position{}).Filter()
+	jobs := w.View(components.Job{}).Filter()
 
 	actors := w.View(components.Worker{}, components.Move{}, components.Position{})
 	actors.Each(func(e engine.Entity) {
@@ -33,25 +33,28 @@ func (a *Actor) Update(w engine.World) {
 				return
 			}
 
-			var jp *components.Position
-			var task *components.Task
+			var tasks *components.Job
 
 			for _, job := range jobs {
-				job.Get(&jp, &task)
-				if task.Claimed {
+				job.Get(&tasks)
+				if tasks.ClaimedByID > 0 {
 					continue
 				}
 
 				worker.HasJob = true
 				worker.JobID = job.ID()
-				worker.InputModeEnum = task.InputModeEnum
+
+				currentTask := tasks.Tasks[0]
 
 				move.Adjacent = true
+				if currentTask.TaskTypeEnum == enums.TaskTypePickUp || currentTask.TaskTypeEnum == enums.TaskTypeDrop {
+					move.Adjacent = false
+				}
 
-				move.X = jp.X
-				move.Y = jp.Y
-				move.Z = jp.Z
-				task.Claimed = true
+				move.X = currentTask.Position.X
+				move.Y = currentTask.Position.Y
+				move.Z = currentTask.Position.Z
+				tasks.ClaimedByID = e.ID()
 				break
 			}
 		} else if move.Arrived {
@@ -64,29 +67,43 @@ func (a *Actor) Update(w engine.World) {
 			if !found {
 				log.Println("arrived at location but job not found")
 				worker.HasJob = false
-				worker.InputModeEnum = enums.InputModeNone
 				return
 			}
 
-			var task *components.Task
-			job.Get(&task)
-			if task.ActionsComplete < task.RequiredActions {
-				task.ActionsComplete++
+			var tasks *components.Job
+			job.Get(&tasks)
+			currentTask := tasks.Tasks[0]
+
+			if currentTask.ActionsComplete < currentTask.RequiredActions {
+				currentTask.ActionsComplete++
 				move.CurrentEnergy = 0
 				return
 			}
 
-			task.CompleteTask()
+			currentTask.CompleteTask()
+			if len(tasks.Tasks) > 1 {
+				task := tasks.Tasks[1]
+				move.Adjacent = true
+				if task.TaskTypeEnum == enums.TaskTypePickUp || task.TaskTypeEnum == enums.TaskTypeDrop || task.TaskTypeEnum == enums.TaskTypeAddToStockpile {
+					move.Adjacent = false
+				}
+
+				move.X = task.Position.X
+				move.Y = task.Position.Y
+				move.Z = task.Position.Z
+				tasks.ClaimedByID = e.ID()
+				move.Arrived = false
+				return
+			}
+
 			worker.HasJob = false
 			worker.JobID = 0
-			worker.InputModeEnum = enums.InputModeNone
 		} else {
 			// Check for job cancellation
 			_, found := w.GetEntity(worker.JobID)
 			if !found {
 				worker.HasJob = false
 				worker.JobID = 0
-				worker.InputModeEnum = enums.InputModeBuild
 				move.X = pos.X
 				move.Y = pos.Y
 				move.Z = pos.Z

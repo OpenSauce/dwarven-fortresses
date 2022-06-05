@@ -98,6 +98,8 @@ func UpdateTile(w engine.World, fromTileType, newTileType enums.TileTypeEnum, ti
 			case enums.TileTypeGrass:
 				r := rand.Intn(3)
 				tmSprite.Image.DrawImage(assets.Images[fmt.Sprintf("grass%d", r)], op)
+				cell := gmComp.Grids[tile.Z].Get(tile.X, tile.Y)
+				cell.Walkable = true
 			case enums.TileTypeRockFloor:
 				tmSprite.Image.DrawImage(assets.Images["rockfloor"], op)
 				cell := gmComp.Grids[tile.Z].Get(tile.X, tile.Y)

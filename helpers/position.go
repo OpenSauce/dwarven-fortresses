@@ -1,9 +1,13 @@
 package helpers
 
 import (
+	"log"
+
 	"github.com/OpenSauce/paths"
+	"github.com/sedyh/mizu/pkg/engine"
 	"github.com/tomknightdev/dwarven-fortresses/assets"
 	"github.com/tomknightdev/dwarven-fortresses/components"
+	"github.com/tomknightdev/dwarven-fortresses/enums"
 )
 
 func Matches(a components.Position, b components.Position) bool {
@@ -38,4 +42,114 @@ func IsAdjacent(dest components.Move, current components.Position) bool {
 	}
 
 	return false
+}
+
+func StockpileLocations(w engine.World, itemType enums.ItemTypeEnum, assignItemType bool) []components.Position {
+	ents := w.View(components.Designation{}, components.Position{}, components.Inventory{})
+
+	var d *components.Designation
+	var p *components.Position
+	var i *components.Inventory
+
+	var spPositions []components.Position
+	var firstFree int
+	var itemTypePositions []components.Position
+	ents.Each(func(e engine.Entity) {
+		e.Get(&d, &p, &i)
+
+		if len(i.Items) >= d.MaxItems {
+			return
+		}
+
+		if d.DesignationType == enums.DesignationTypeStockpile {
+			spPositions = append(spPositions, *p)
+
+			if d.ItemType == itemType {
+				itemTypePositions = append(itemTypePositions, *p)
+			}
+
+			if firstFree == 0 && d.ItemType == enums.ItemTypeNone {
+				firstFree = e.ID()
+			}
+		}
+	})
+
+	if len(spPositions) == 0 {
+		return spPositions
+	}
+
+	if len(itemTypePositions) > 0 {
+		return itemTypePositions
+	}
+
+	if assignItemType && itemType != enums.ItemTypeNone {
+		e, found := w.GetEntity(firstFree)
+		if !found {
+			log.Println("somehow failed to find entity")
+			return spPositions
+		}
+
+		e.Get(&d, &p)
+		d.ItemType = itemType
+		return []components.Position{*p}
+	}
+
+	return spPositions
+}
+
+func AddItemToStockpile(w engine.World, pos components.Position, itemID, quatity int) {
+	ents := w.View(components.Designation{}, components.Position{}, components.Inventory{}).Filter()
+	var p *components.Position
+	var d *components.Designation
+	var i *components.Inventory
+
+	for _, e := range ents {
+		e.Get(&p, &d, &i)
+
+		if Matches(*p, pos) {
+			i.Items = append(i.Items, itemID)
+
+			item, found := w.GetEntity(itemID)
+			if !found {
+				log.Println("item not found")
+			}
+
+			var it *components.Item
+			item.Get(&it)
+			it.InStockpile = true
+			it.Claimed = false
+
+			break
+		}
+	}
+}
+
+func RemoveItemFromStockpile(w engine.World, pos components.Position, itemID, quantity int) {
+	ents := w.View(components.Designation{}, components.Position{}, components.Inventory{}).Filter()
+	var p *components.Position
+	var d *components.Designation
+	var i *components.Inventory
+
+	for _, e := range ents {
+		e.Get(&p, &d, &i)
+
+		if Matches(*p, pos) {
+			for index, t := range i.Items {
+				if t == itemID {
+					i.Items = append(i.Items[:index], i.Items[index+1:]...)
+				}
+			}
+
+			item, found := w.GetEntity(itemID)
+			if !found {
+				log.Println("item not found")
+			}
+
+			var it *components.Item
+			item.Get(&it)
+			it.InStockpile = false
+
+			break
+		}
+	}
 }

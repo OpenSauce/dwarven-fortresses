@@ -28,6 +28,7 @@ func (g *Game) Setup(w engine.World) {
 		components.Zoom{},
 		components.TileType{},
 		components.Task{},
+		components.Job{},
 		components.Worker{},
 		components.TileMap{},
 		components.Gui{},
@@ -38,6 +39,8 @@ func (g *Game) Setup(w engine.World) {
 		components.Nature{},
 		components.Item{},
 		components.Building{},
+		components.Designation{},
+		components.Inventory{},
 	)
 
 	w.AddSystems(
@@ -49,6 +52,7 @@ func (g *Game) Setup(w engine.World) {
 		systems.NewGui(),
 		systems.NewNature(),
 		systems.NewBuilding(),
+		systems.NewDesignations(),
 		systems.NewItem(),
 		systems.NewJob(),
 		systems.NewActor(),
@@ -66,10 +70,11 @@ func (g *Game) Setup(w engine.World) {
 	// Actors
 	for i := 0; i < assets.StartingDwarfCount; i++ {
 		w.AddEntities(&entities.Actor{
-			Position: components.NewPosition(1, 1, 5),
-			Sprite:   components.NewSprite(assets.Images["dwarf"]),
-			Move:     components.NewMove(1, 1, 5),
-			Worker:   components.NewWorker(),
+			Position:  components.NewPosition(1, 1, 5),
+			Sprite:    components.NewSprite(assets.Images["dwarf"]),
+			Move:      components.NewMove(1, 1, 5),
+			Worker:    components.NewWorker(),
+			Inventory: components.NewInventory(),
 		})
 	}
 
@@ -102,5 +107,9 @@ func setupGui(w engine.World) {
 	w.AddEntities(&entities.Gui{
 		Gui:    components.NewGui(10, 300, 3.0, enums.GuiActionMine),
 		Sprite: components.NewSprite(assets.Images["pickaxe"]),
+	})
+	w.AddEntities(&entities.Gui{
+		Gui:    components.NewGui(10, 350, 3.0, enums.GuiActionStockpile),
+		Sprite: components.NewSprite(assets.Images["stockpile"]),
 	})
 }
