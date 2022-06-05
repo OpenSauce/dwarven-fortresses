@@ -59,6 +59,12 @@ func (i *Input) Update(w engine.World) {
 		inputSingleton.IsCameraRaisePressed = false
 	}
 
+	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+		inputSingleton.IsResetInputModePressed = true
+	} else {
+		inputSingleton.IsResetInputModePressed = false
+	}
+
 	// Mouse updates
 	_, wy := ebiten.Wheel()
 	inputSingleton.MouseWheel = wy
@@ -81,6 +87,12 @@ func (i *Input) Update(w engine.World) {
 		inputSingleton.IsMouseLeftReleased = true
 	} else {
 		inputSingleton.IsMouseLeftReleased = false
+	}
+
+	if inpututil.MouseButtonPressDuration(ebiten.MouseButtonRight) > 0 {
+		inputSingleton.MouseRightPressDuration = true
+	} else {
+		inputSingleton.MouseRightPressDuration = false
 	}
 
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonRight) {

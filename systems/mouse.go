@@ -24,7 +24,8 @@ func (m *Mouse) Update(w engine.World) {
 	}
 	is.Get(&inputSingleton)
 
-	inputSingleton.SelectedTiles = nil
+	inputSingleton.LeftClickedTiles = nil
+	inputSingleton.RightClickedTiles = nil
 	if inputSingleton.InGui {
 		return
 	}
@@ -54,7 +55,7 @@ func (m *Mouse) Update(w engine.World) {
 	p.Y = int((float64(inputSingleton.MouseWorldPosY) / zoom.Value) / float64(assets.CellSize))
 	p.Z = camPos.Z
 
-	if inputSingleton.IsMouseRightReleased {
+	if inputSingleton.IsResetInputModePressed {
 		inputSingleton.InputMode = enums.InputModeNone
 	}
 
@@ -63,12 +64,13 @@ func (m *Mouse) Update(w engine.World) {
 	}
 
 	if inputSingleton.InputMode != enums.InputModeNone {
-		if inputSingleton.IsMouseLeftPressed {
+		if inputSingleton.IsMouseLeftPressed || inputSingleton.IsMouseRightPressed {
 			mComp.MouseStart = *p
 		}
 
-		if inputSingleton.MouseLeftPressDuration {
-			mComp.SelectedTiles = nil
+		if inputSingleton.MouseLeftPressDuration || inputSingleton.MouseRightPressDuration {
+			mComp.LeftClickedTiles = nil
+			mComp.RightClickedTiles = nil
 			startX := mComp.MouseStart.X
 			startY := mComp.MouseStart.Y
 			endX := p.X
@@ -88,17 +90,23 @@ func (m *Mouse) Update(w engine.World) {
 
 			for mx := startX; mx <= endX; mx++ {
 				for my := startY; my <= endY; my++ {
-					mComp.SelectedTiles = append(mComp.SelectedTiles, components.NewPosition(mx, my, p.Z))
+					if inputSingleton.MouseLeftPressDuration {
+						mComp.LeftClickedTiles = append(mComp.LeftClickedTiles, components.NewPosition(mx, my, p.Z))
+					} else {
+						mComp.RightClickedTiles = append(mComp.RightClickedTiles, components.NewPosition(mx, my, p.Z))
+					}
 				}
 			}
 		}
 
 		if inputSingleton.IsMouseLeftReleased {
-			inputSingleton.SelectedTiles = mComp.SelectedTiles
-			mComp.SelectedTiles = nil
+			inputSingleton.LeftClickedTiles = mComp.LeftClickedTiles
+			mComp.LeftClickedTiles = nil
+		} else if inputSingleton.IsMouseRightReleased {
+			inputSingleton.RightClickedTiles = mComp.RightClickedTiles
+			mComp.RightClickedTiles = nil
 		}
 	}
-
 }
 
 func (m *Mouse) Draw(w engine.World, screen *ebiten.Image) {
@@ -145,7 +153,7 @@ func (m *Mouse) Draw(w engine.World, screen *ebiten.Image) {
 
 	helpers.DrawImage(w, screen, *mousePos, mouseSprite.Image)
 
-	if inputSingleton.MouseLeftPressDuration {
+	if inputSingleton.MouseLeftPressDuration || inputSingleton.MouseRightPressDuration {
 		startX := mComp.MouseStart.X
 		startY := mComp.MouseStart.Y
 		endX := mousePos.X
