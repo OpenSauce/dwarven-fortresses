@@ -5,6 +5,9 @@ type InputModeEnum int
 type GuiActionEnum int
 type ResourceTypeEnum int
 type DropTypeEnum int
+type TaskTypeEnum int
+type DesignationTypeEnum int
+type ItemTypeEnum int
 
 const (
 	TileTypeEmpty TileTypeEnum = iota
@@ -15,6 +18,7 @@ const (
 	TileTypeWater
 	TileTypeStairDown
 	TileTypeStairUp
+	TileTypeStockpile
 )
 
 const (
@@ -23,6 +27,8 @@ const (
 	InputModeGather
 	InputModeChop
 	InputModeMine
+	InputModeStockpile
+	InputModeHaul
 )
 
 const (
@@ -30,6 +36,7 @@ const (
 	GuiActionChop
 	GuiActionStair
 	GuiActionMine
+	GuiActionStockpile
 )
 
 const (
@@ -40,4 +47,26 @@ const (
 const (
 	DropTypeNone DropTypeEnum = iota
 	DropTypeLog
+)
+
+const (
+	TaskTypeNone TaskTypeEnum = iota
+	TaskTypePickUp
+	TaskTypeHaul
+	TaskTypeDrop
+	TaskTypeChop
+	TaskTypeMine
+	TaskTypeBuild
+	TaskTypeAddToStockpile
+)
+
+const (
+	DesignationTypeNone DesignationTypeEnum = iota
+	DesignationTypeStockpile
+)
+
+const (
+	ItemTypeNone ItemTypeEnum = iota
+	ItemTypeLog
+	ItemTypeStone
 )

@@ -37,8 +37,7 @@ func (j *Job) Update(w engine.World) {
 				for _, st := range inputSingleton.LeftClickedTiles {
 					if rPos.X == st.X && rPos.Y == st.Y && rPos.Z == st.Z {
 						w.AddEntities(&entities.Job{
-							Position: components.NewPosition(st.X, st.Y, st.Z),
-							Task:     components.NewTask(enums.InputModeChop, 10, r.ID()),
+							Job: components.NewJob(r.ID(), components.NewTask(components.NewPosition(st.X, st.Y, st.Z), enums.TaskTypeChop, 10)),
 						})
 					}
 				}
@@ -64,33 +63,33 @@ func (j *Job) Update(w engine.World) {
 				}
 
 				w.AddEntities(&entities.Job{
-					Position: components.NewPosition(st.X, st.Y, st.Z),
-					Task:     components.NewTask(enums.InputModeMine, 10, 0),
+					Job: components.NewJob(0, components.NewTask(components.NewPosition(st.X, st.Y, st.Z), enums.TaskTypeMine, 10)),
 				})
 			}
 
 		case enums.InputModeBuild:
 			w.AddEntities(&entities.Job{
-				Position: components.NewPosition(inputSingleton.LeftClickedTiles[0].X, inputSingleton.LeftClickedTiles[0].Y, inputSingleton.LeftClickedTiles[0].Z),
-				Task:     components.NewTask(enums.InputModeBuild, 10, 0),
+				Job: components.NewJob(0, components.NewTask(components.NewPosition(inputSingleton.LeftClickedTiles[0].X, inputSingleton.LeftClickedTiles[0].Y, inputSingleton.LeftClickedTiles[0].Z), enums.TaskTypeBuild, 10)),
 			})
 		}
 	} else if len(inputSingleton.RightClickedTiles) > 0 {
-		// Cancel jobs
-		jobs := w.View(components.Task{}).Filter()
+		// Cancel ents
+		ents := w.View(components.Job{}).Filter()
 
-		if len(jobs) == 0 {
+		if len(ents) == 0 {
 			return
 		}
 
 		var entitiesToRemove []engine.Entity
 
-		for _, job := range jobs {
-			var pos *components.Position
-			job.Get(&pos)
-			for _, st := range inputSingleton.RightClickedTiles {
-				if helpers.Matches(st, *pos) {
-					entitiesToRemove = append(entitiesToRemove, job)
+		for _, e := range ents {
+			var job *components.Job
+			e.Get(&job)
+			for _, t := range job.Tasks {
+				for _, st := range inputSingleton.RightClickedTiles {
+					if helpers.Matches(st, t.Position) {
+						entitiesToRemove = append(entitiesToRemove, e)
+					}
 				}
 			}
 		}
@@ -99,16 +98,37 @@ func (j *Job) Update(w engine.World) {
 			w.RemoveEntity(job)
 		}
 	}
+
+	// Create jobs for haulable items not in a stockpile
+	items := w.View(components.Item{}, components.Position{})
+	var i *components.Item
+	var p *components.Position
+
+	items.Each(func(e engine.Entity) {
+		e.Get(&i, &p)
+		if !i.Claimed && i.Haulable && !i.InStockpile {
+			spPoses := helpers.StockpileLocations(w, i.ItemType, true)
+			if len(spPoses) > 0 {
+				w.AddEntities(&entities.Job{
+					Job: components.NewJob(e.ID(), components.NewTask(*p, enums.TaskTypePickUp, 1), components.NewTask(spPoses[0], enums.TaskTypeAddToStockpile, 1)),
+				})
+
+				i.Claimed = true
+			}
+		}
+	})
 }
 
 func (j *Job) Draw(w engine.World, screen *ebiten.Image) {
-	ents := w.View(components.Task{}, components.Position{})
-	var p *components.Position
+	ents := w.View(components.Job{})
+	var t *components.Job
 
 	ents.Each(func(e engine.Entity) {
-		e.Get(&p)
+		e.Get(&t)
 
-		helpers.DrawImage(w, screen, *p, assets.Images["cursor"])
+		for _, task := range t.Tasks {
+			helpers.DrawImage(w, screen, task.Position, assets.Images["cursor"])
+		}
 	})
 
 }

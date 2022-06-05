@@ -29,13 +29,14 @@ func (p *Pathfinder) Update(w engine.World) {
 
 	pathCalcsForTick := 0
 
-	view := w.View(components.Move{}, components.Position{})
+	view := w.View(components.Move{}, components.Position{}, components.Inventory{})
 	view.Each((func(e engine.Entity) {
 		var move *components.Move
 		var pos *components.Position
-		e.Get(&move, &pos)
+		var inv *components.Inventory
+		e.Get(&move, &pos, &inv)
 
-		if move.CurrentEnergy < move.TotalEnergy {
+		if move.CurrentEnergy < move.TotalEnergy+inv.Weight {
 			move.CurrentEnergy++
 			return
 		}
@@ -89,14 +90,13 @@ func (p *Pathfinder) Update(w engine.World) {
 
 						job, found := w.GetEntity(wk.JobID)
 						if found {
-							var j *components.Task
+							var jobComp *components.Job
 							var jPos *components.Position
-							job.Get(&j, &jPos)
-							j.Claimed = false
+							job.Get(&jobComp, &jPos)
+							jobComp.ClaimedByID = 0
 
 							w.AddEntities(&entities.Job{
-								Position: *jPos,
-								Task:     *j,
+								Job: *jobComp,
 							})
 
 							w.RemoveEntity(job)

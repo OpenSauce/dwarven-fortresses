@@ -41,6 +41,8 @@ func (g *Gui) Update(w engine.World) {
 					inputSingleton.InputMode = enums.InputModeChop
 				case enums.GuiActionMine:
 					inputSingleton.InputMode = enums.InputModeMine
+				case enums.GuiActionStockpile:
+					inputSingleton.InputMode = enums.InputModeStockpile
 				}
 			}
 		}

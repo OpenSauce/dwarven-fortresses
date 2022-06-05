@@ -149,6 +149,8 @@ func (m *Mouse) Draw(w engine.World, screen *ebiten.Image) {
 		mouseSprite.Image = assets.Images["cursor"]
 	case enums.InputModeMine:
 		mouseSprite.Image = assets.Images["pickaxe"]
+	case enums.InputModeStockpile:
+		mouseSprite.Image = assets.Images["stockpile"]
 	}
 
 	helpers.DrawImage(w, screen, *mousePos, mouseSprite.Image)

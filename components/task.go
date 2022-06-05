@@ -3,19 +3,18 @@ package components
 import "github.com/tomknightdev/dwarven-fortresses/enums"
 
 type Task struct {
-	enums.InputModeEnum
-	Claimed         bool
+	enums.TaskTypeEnum
 	RequiredActions int
 	ActionsComplete int
-	EntityID        int
+	Position        Position
 	Completed       bool
 }
 
-func NewTask(inputModeEnum enums.InputModeEnum, requiredActions, entityId int) Task {
-	return Task{
-		InputModeEnum:   inputModeEnum,
+func NewTask(pos Position, taskType enums.TaskTypeEnum, requiredActions int) *Task {
+	return &Task{
+		TaskTypeEnum:    taskType,
 		RequiredActions: requiredActions,
-		EntityID:        entityId,
+		Position:        pos,
 	}
 }
 
