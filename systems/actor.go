@@ -78,7 +78,22 @@ func (a *Actor) Update(w engine.World) {
 
 			task.CompleteTask()
 			worker.HasJob = false
+			worker.JobID = 0
 			worker.InputModeEnum = enums.InputModeNone
+		} else {
+			// Check for job cancellation
+			_, found := w.GetEntity(worker.JobID)
+			if !found {
+				worker.HasJob = false
+				worker.JobID = 0
+				worker.InputModeEnum = enums.InputModeBuild
+				move.X = pos.X
+				move.Y = pos.Y
+				move.Z = pos.Z
+
+				move.Arrived = true
+			}
+
 		}
 	})
 }

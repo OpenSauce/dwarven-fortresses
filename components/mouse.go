@@ -1,8 +1,9 @@
 package components
 
 type Mouse struct {
-	MouseStart    Position
-	SelectedTiles []Position
+	MouseStart        Position
+	LeftClickedTiles  []Position
+	RightClickedTiles []Position
 }
 
 func NewMouse() Mouse {
