@@ -58,7 +58,7 @@ func (t *Task) Update(w engine.World) {
 				for i := 0; i < drop.DropCount; i++ {
 					w.AddEntities(&entities.Item{
 						Position: pos,
-						Sprite:   components.NewSprite(assets.Images["log0"]),
+						Sprite:   components.NewSprite(assets.TransImages[enums.TileTypeLog0]),
 						Item:     components.NewItem(true, 25, enums.ItemTypeLog),
 					})
 				}
@@ -67,7 +67,7 @@ func (t *Task) Update(w engine.World) {
 			case enums.TaskTypeBuild:
 				w.AddEntities(&entities.Building{
 					Position: pos,
-					Sprite:   components.NewSprite(assets.Images["stairdown"]),
+					Sprite:   components.NewSprite(assets.Images[enums.TileTypeStairDown]),
 					TileType: components.NewTileType(enums.TileTypeStairDown),
 					Building: components.NewBuilding(),
 				})
@@ -84,7 +84,7 @@ func (t *Task) Update(w engine.World) {
 
 				w.AddEntities(&entities.Building{
 					Position: components.NewPosition(pos.X, pos.Y, pos.Z-1),
-					Sprite:   components.NewSprite(assets.Images["stairup"]),
+					Sprite:   components.NewSprite(assets.Images[enums.TileTypeStairUp]),
 					TileType: components.NewTileType(enums.TileTypeStairUp),
 					Building: components.NewBuilding(),
 				})
@@ -104,7 +104,7 @@ func (t *Task) Update(w engine.World) {
 				for i := 0; i < 1; i++ {
 					w.AddEntities(&entities.Item{
 						Position: pos,
-						Sprite:   components.NewSprite(assets.Images["rocks"]),
+						Sprite:   components.NewSprite(assets.TransImages[enums.TileTypeRocks]),
 						Item:     components.NewItem(true, 25, enums.ItemTypeStone),
 					})
 				}

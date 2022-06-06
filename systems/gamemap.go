@@ -167,8 +167,8 @@ func generateWorld(w engine.World, gms *components.GameMapSingleton) {
 				}
 
 				if z == 5 {
-					t.TileType = components.NewTileType(enums.TileTypeDirt)
-					t.Image = assets.Images["dirt0"]
+					t.TileType = components.NewTileType(enums.TileTypeDirt0)
+					t.Image = assets.Images[enums.TileTypeDirt0]
 				} else if z < 5 {
 					t.TileType = components.NewTileType(enums.TileTypeRock)
 					// t.Image = assets.Images["rock"]
@@ -188,7 +188,7 @@ func generateWorld(w engine.World, gms *components.GameMapSingleton) {
 	// Setup resource tiles
 	rand.Seed(time.Now().UnixNano())
 
-	for _, tile := range gms.TilesByType[enums.TileTypeDirt] {
+	for _, tile := range gms.TilesByType[enums.TileTypeDirt0] {
 		if rand.Intn(100) < 5 {
 			g := gms.Grids[tile.Z]
 			c := g.Get(tile.X, tile.Y)
@@ -199,7 +199,7 @@ func generateWorld(w engine.World, gms *components.GameMapSingleton) {
 				components.Sprite
 			}{
 				Position: components.NewPosition(tile.X, tile.Y, tile.Z),
-				Sprite:   components.NewSprite(assets.Images["tree0"]),
+				Sprite:   components.NewSprite(assets.Images[enums.TileTypeTree0]),
 			}
 
 			gms.ResourcesByZ[tile.Z] = append(gms.ResourcesByZ[tile.Z], t)

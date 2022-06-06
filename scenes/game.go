@@ -71,7 +71,7 @@ func (g *Game) Setup(w engine.World) {
 	for i := 0; i < assets.StartingDwarfCount; i++ {
 		w.AddEntities(&entities.Actor{
 			Position:  components.NewPosition(1, 1, 5),
-			Sprite:    components.NewSprite(assets.Images["dwarf"]),
+			Sprite:    components.NewSprite(assets.TransImages[enums.TileTypeDwarf]),
 			Move:      components.NewMove(1, 1, 5),
 			Worker:    components.NewWorker(),
 			Inventory: components.NewInventory(),
@@ -82,7 +82,7 @@ func (g *Game) Setup(w engine.World) {
 	cx, cy := ebiten.CursorPosition()
 	w.AddEntities(&entities.Mouse{
 		Position: components.NewPosition(cx, cy, 5),
-		Sprite:   components.NewSprite(assets.Images["empty"]),
+		Sprite:   components.NewSprite(assets.Images[enums.TileTypeEmpty]),
 		Mouse:    components.NewMouse(),
 	})
 
@@ -98,18 +98,18 @@ func (g *Game) Setup(w engine.World) {
 func setupGui(w engine.World) {
 	w.AddEntities(&entities.Gui{
 		Gui:    components.NewGui(10, 200, 3.0, enums.GuiActionStair),
-		Sprite: components.NewSprite(assets.Images["stairdown"]),
+		Sprite: components.NewSprite(assets.Images[enums.TileTypeStairDown]),
 	})
 	w.AddEntities(&entities.Gui{
 		Gui:    components.NewGui(10, 250, 3.0, enums.GuiActionChop),
-		Sprite: components.NewSprite(assets.Images["tree0"]),
+		Sprite: components.NewSprite(assets.Images[enums.TileTypeTree0]),
 	})
 	w.AddEntities(&entities.Gui{
 		Gui:    components.NewGui(10, 300, 3.0, enums.GuiActionMine),
-		Sprite: components.NewSprite(assets.Images["pickaxe"]),
+		Sprite: components.NewSprite(assets.Images[enums.TileTypePickaxe]),
 	})
 	w.AddEntities(&entities.Gui{
 		Gui:    components.NewGui(10, 350, 3.0, enums.GuiActionStockpile),
-		Sprite: components.NewSprite(assets.Images["stockpile"]),
+		Sprite: components.NewSprite(assets.Images[enums.TileTypeStockpile]),
 	})
 }
