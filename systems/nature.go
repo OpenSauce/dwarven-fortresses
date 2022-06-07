@@ -1,58 +1,61 @@
 package systems
 
 import (
-	"fmt"
 	"math/rand"
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/sedyh/mizu/pkg/engine"
-	"github.com/tomknightdev/dwarven-fortresses/assets"
 	"github.com/tomknightdev/dwarven-fortresses/components"
 	"github.com/tomknightdev/dwarven-fortresses/enums"
+	"github.com/tomknightdev/dwarven-fortresses/helpers"
 )
 
 type Nature struct {
-	GrowTimer        int
-	CurrentGrowTimer int
 }
 
 func NewNature() *Nature {
-	return &Nature{
-		GrowTimer:        100,
-		CurrentGrowTimer: 0,
-	}
+	return &Nature{}
 }
 
 func (n *Nature) Update(w engine.World) {
-	if n.CurrentGrowTimer < n.GrowTimer {
-		n.CurrentGrowTimer++
+	ne, found := w.View(components.NatureSingleton{}).Get()
+	if !found {
+		panic("unable to find entity with nature component")
+	}
+	var nc *components.NatureSingleton
+	ne.Get(&nc)
+
+	if nc.CurrentGrowTimer < nc.GrowTimer {
+		nc.CurrentGrowTimer++
 		return
 	}
-	n.CurrentGrowTimer = 0
+	nc.CurrentGrowTimer = 0
+
+	gms, found := w.View(components.GameMapSingleton{}).Get()
+	if !found {
+		panic("game map singleton not found")
+	}
+
+	var gmComp *components.GameMapSingleton
+	gms.Get(&gmComp)
 
 	// Pick a random tile, if dirt, make grass
-	tiles := w.View(components.TileType{}, components.Position{}).Filter()
+	tiles := gmComp.TilesByType[enums.TileTypeDirt0]
 	rand.Seed(time.Now().UnixNano())
 	r := rand.Intn(len(tiles))
 
-	var tt *components.TileType
-	var pos *components.Position
-	tiles[r].Get(&tt, &pos)
-	if tt.TileTypeEnum == enums.TileTypeDirt {
-		tileMap := w.View(components.TileMap{}, components.Sprite{}, components.Position{}).Filter()
-		for _, tm := range tileMap {
-			var tmPos *components.Position
-			var tmSprite *components.Sprite
+	helpers.UpdateTile(w, enums.TileTypeDirt0, enums.TileTypeGrass0, r, gmComp)
+}
 
-			tm.Get(&tmPos, &tmSprite)
-			if tmPos.Z == pos.Z {
-				op := &ebiten.DrawImageOptions{}
-				op.GeoM.Translate(float64(pos.X*assets.CellSize), float64(pos.Y*assets.CellSize))
-				r = rand.Intn(3)
-				tmSprite.Image.DrawImage(assets.Images[fmt.Sprintf("grass%d", r)], op)
-				break
-			}
-		}
+func (n *Nature) Draw(w engine.World, screen *ebiten.Image) {
+	ne, found := w.View(components.NatureSingleton{}).Get()
+	if !found {
+		panic("unable to find entity with nature component")
 	}
+	var nc *components.NatureSingleton
+	ne.Get(&nc)
+
+	ents := w.View(components.Nature{}, components.Sprite{}, components.Position{}).Filter()
+	helpers.DrawImages(w, screen, nc.OffScreen, ents)
 }

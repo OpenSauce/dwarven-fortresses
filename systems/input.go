@@ -4,10 +4,7 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/sedyh/mizu/pkg/engine"
-	"github.com/tomknightdev/dwarven-fortresses/assets"
 	"github.com/tomknightdev/dwarven-fortresses/components"
-	"github.com/tomknightdev/dwarven-fortresses/entities"
-	"github.com/tomknightdev/dwarven-fortresses/enums"
 )
 
 type Input struct {
@@ -18,107 +15,95 @@ func NewInput() *Input {
 }
 
 func (i *Input) Update(w engine.World) {
-	// Handle camera update
-	camera, found := w.View(components.Zoom{}, components.Position{}).Get()
+	var inputSingleton *components.InputSingleton
+	is, found := w.View(components.InputSingleton{}).Get()
 	if !found {
-		return
+		panic("input singleton was not found")
 	}
-	var zoom *components.Zoom
-	var camPos *components.Position
-	camera.Get(&zoom, &camPos)
+	is.Get(&inputSingleton)
 
-	if inpututil.KeyPressDuration(ebiten.KeyD) > 0 && camPos.X < assets.WorldWidth*assets.CellSize {
-		camPos.X += assets.CellSize / 2
-	} else if inpututil.KeyPressDuration(ebiten.KeyA) > 0 && camPos.X > 0 {
-		camPos.X -= assets.CellSize / 2
-	}
-	if inpututil.KeyPressDuration(ebiten.KeyS) > 0 && camPos.Y < assets.WorldHeight*assets.CellSize {
-		camPos.Y += assets.CellSize / 2
-	} else if inpututil.KeyPressDuration(ebiten.KeyW) > 0 && camPos.Y > 0 {
-		camPos.Y -= assets.CellSize / 2
+	// Keyboard updates
+	if inpututil.KeyPressDuration(ebiten.KeyD) > 0 {
+		inputSingleton.IsCameraRightPressed = true
+	} else {
+		inputSingleton.IsCameraRightPressed = false
 	}
 
-	// Zoom the camera
+	if inpututil.KeyPressDuration(ebiten.KeyA) > 0 {
+		inputSingleton.IsCameraLeftPressed = true
+	} else {
+		inputSingleton.IsCameraLeftPressed = false
+	}
+
+	if inpututil.KeyPressDuration(ebiten.KeyW) > 0 {
+		inputSingleton.IsCameraUpPressed = true
+	} else {
+		inputSingleton.IsCameraUpPressed = false
+	}
+
+	if inpututil.KeyPressDuration(ebiten.KeyS) > 0 {
+		inputSingleton.IsCameraDownPressed = true
+	} else {
+		inputSingleton.IsCameraDownPressed = false
+	}
+
+	if inpututil.IsKeyJustPressed(ebiten.KeyE) {
+		inputSingleton.IsCameraLowerPressed = true
+	} else {
+		inputSingleton.IsCameraLowerPressed = false
+	}
+
+	if inpututil.IsKeyJustPressed(ebiten.KeyQ) {
+		inputSingleton.IsCameraRaisePressed = true
+	} else {
+		inputSingleton.IsCameraRaisePressed = false
+	}
+
+	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+		inputSingleton.IsResetInputModePressed = true
+	} else {
+		inputSingleton.IsResetInputModePressed = false
+	}
+
+	// Mouse updates
 	_, wy := ebiten.Wheel()
-	if wy > 0 && zoom.Value < 10 {
-		zoom.Value += 0.5
-	} else if wy < 0 && zoom.Value > 1.1 {
-		zoom.Value -= 0.5
+	inputSingleton.MouseWheel = wy
+
+	inputSingleton.MousePosX, inputSingleton.MousePosY = ebiten.CursorPosition()
+
+	if inpututil.MouseButtonPressDuration(ebiten.MouseButtonLeft) > 0 {
+		inputSingleton.MouseLeftPressDuration = true
+	} else {
+		inputSingleton.MouseLeftPressDuration = false
 	}
 
-	// Adjust camera z level
-	if inpututil.IsKeyJustPressed(ebiten.KeyE) && camPos.Z > 0 {
-		camPos.Z--
-	} else if inpututil.IsKeyJustPressed(ebiten.KeyQ) && camPos.Z < assets.WorldLevels {
-		camPos.Z++
+	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+		inputSingleton.IsMouseLeftPressed = true
+	} else {
+		inputSingleton.IsMouseLeftPressed = false
 	}
 
-	// Handle mouse update
-	cx, cy := ebiten.CursorPosition()
-	mouseInput, found := w.View(components.Input{}, components.Position{}, components.Sprite{}).Get()
-	if !found {
-		return
-	}
-	var input *components.Input
-	var mousePos *components.Position
-	var mouseSprite *components.Sprite
-	mouseInput.Get(&input, &mousePos, &mouseSprite)
-	mouseMode := input.MouseMode
-
-	// Check if mouse is over the gui
-	guis := w.View(components.Gui{}, components.Sprite{}).Filter()
-	for _, g := range guis {
-		var gsp *components.Sprite
-		var gui *components.Gui
-		g.Get(&gsp, &gui)
-
-		if gui.Within(cx, cy) {
-			if inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) {
-				mouseMode = enums.MouseModeBuild
-			}
-		}
+	if inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) {
+		inputSingleton.IsMouseLeftReleased = true
+	} else {
+		inputSingleton.IsMouseLeftReleased = false
 	}
 
-	ww, wh := ebiten.WindowSize()
-	cx = cx + (camPos.X - (ww / 2))
-	cy = cy + (camPos.Y - (wh / 2))
-
-	if inpututil.IsKeyJustReleased(ebiten.KeyEscape) {
-		setMouseMode(input, mouseSprite, enums.MouseModeNone)
-	} else if input.MouseMode != mouseMode {
-		setMouseMode(input, mouseSprite, mouseMode)
+	if inpututil.MouseButtonPressDuration(ebiten.MouseButtonRight) > 0 {
+		inputSingleton.MouseRightPressDuration = true
+	} else {
+		inputSingleton.MouseRightPressDuration = false
 	}
 
-	mousePos.X = int((float64(cx) / zoom.Value) / float64(assets.CellSize))
-	mousePos.Y = int((float64(cy) / zoom.Value) / float64(assets.CellSize))
-
-	if mouseMode != enums.MouseModeNone && inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) {
-		tiles := w.View(components.TileType{}, components.Position{}).Filter()
-		var tp *components.Position
-
-		for _, t := range tiles {
-			t.Get(&tp)
-			if tp.X == mousePos.X && tp.Y == mousePos.Y && tp.Z == camPos.Z {
-				w.AddEntities(&entities.Job{
-					Position: components.NewPosition(tp.X, tp.Y, tp.Z),
-					Task:     components.NewTask(enums.TaskTypeMoveTo),
-				})
-				break
-			}
-		}
+	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonRight) {
+		inputSingleton.IsMouseRightPressed = true
+	} else {
+		inputSingleton.IsMouseRightPressed = false
 	}
 
-}
-
-func setMouseMode(i *components.Input, s *components.Sprite, mouseMode enums.MouseModeEnum) {
-	i.MouseMode = mouseMode
-
-	switch mouseMode {
-	case enums.MouseModeNone:
-		s.Image = assets.Images["empty"]
-	case enums.MouseModeGather:
-		s.Image = assets.Images["cursor"]
-	case enums.MouseModeBuild:
-		s.Image = assets.Images["stairdown"]
+	if inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonRight) {
+		inputSingleton.IsMouseRightReleased = true
+	} else {
+		inputSingleton.IsMouseRightReleased = false
 	}
 }

@@ -7,4 +7,5 @@ type Actor struct {
 	components.Sprite
 	components.Move
 	components.Worker
+	components.Inventory
 }

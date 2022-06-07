@@ -4,11 +4,20 @@ import "github.com/tomknightdev/dwarven-fortresses/enums"
 
 type Task struct {
 	enums.TaskTypeEnum
-	Claimed bool
+	RequiredActions int
+	ActionsComplete int
+	Position        Position
+	Completed       bool
 }
 
-func NewTask(tt enums.TaskTypeEnum) Task {
-	return Task{
-		TaskTypeEnum: tt,
+func NewTask(pos Position, taskType enums.TaskTypeEnum, requiredActions int) *Task {
+	return &Task{
+		TaskTypeEnum:    taskType,
+		RequiredActions: requiredActions,
+		Position:        pos,
 	}
+}
+
+func (t *Task) CompleteTask() {
+	t.Completed = true
 }

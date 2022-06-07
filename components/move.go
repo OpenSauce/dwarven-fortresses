@@ -2,9 +2,12 @@ package components
 
 type Move struct {
 	X, Y, Z       int
+	Adjacent      bool // Defines whether to move to an adjacent tile or the actual x,y tile
 	Arrived       bool
 	CurrentEnergy int
 	TotalEnergy   int
+	GettingRoute  bool
+	CurrentPaths  []Path
 }
 
 func NewMove(x, y, z int) Move {
