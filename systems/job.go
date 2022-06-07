@@ -127,7 +127,7 @@ func (j *Job) Draw(w engine.World, screen *ebiten.Image) {
 		e.Get(&t)
 
 		for _, task := range t.Tasks {
-			helpers.DrawImage(w, screen, task.Position, assets.Images["cursor"])
+			helpers.DrawImage(w, screen, task.Position, assets.TransImages[enums.TileTypeCursor])
 		}
 	})
 

@@ -11,14 +11,28 @@ type ItemTypeEnum int
 
 const (
 	TileTypeEmpty TileTypeEnum = iota
-	TileTypeDirt
-	TileTypeGrass
+	TileTypeCursor
+	TileTypeStockpile
 	TileTypeRock
 	TileTypeRockFloor
+	TileTypeRocks
+	TileTypeDirt0
+	TileTypeDirt1
+	TileTypeGrass0
+	TileTypeGrass1
+	TileTypeGrass2
+	TileTypeTree0
+	TileTypeTree1
+	TileTypeTree2
+	TileTypeTree3
+	TileTypeTree4
+	TileTypeTree5
+	TileTypeLog0
 	TileTypeWater
+	TileTypeDwarf
 	TileTypeStairDown
 	TileTypeStairUp
-	TileTypeStockpile
+	TileTypePickaxe
 )
 
 const (

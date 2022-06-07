@@ -27,7 +27,7 @@ func (p *Pathfinder) Update(w engine.World) {
 	var gmComp *components.GameMapSingleton
 	gms.Get(&gmComp)
 
-	pathCalcsForTick := 0
+	// pathCalcsForTick := 0
 
 	view := w.View(components.Move{}, components.Position{}, components.Inventory{})
 	view.Each((func(e engine.Entity) {
@@ -59,10 +59,10 @@ func (p *Pathfinder) Update(w engine.World) {
 
 			if move.CurrentPaths == nil {
 				// If there is a lot of entities, having too many looking for paths in one game tick will really hit TPS.  Limit to 10
-				if pathCalcsForTick == 9 {
-					return
-				}
-				pathCalcsForTick++
+				// if pathCalcsForTick == 9 {
+				// 	return
+				// }
+				// pathCalcsForTick++
 				move.GettingRoute = true
 
 				var paths []components.Path
@@ -91,15 +91,18 @@ func (p *Pathfinder) Update(w engine.World) {
 						job, found := w.GetEntity(wk.JobID)
 						if found {
 							var jobComp *components.Job
-							var jPos *components.Position
-							job.Get(&jobComp, &jPos)
-							jobComp.ClaimedByID = 0
+							job.Get(&jobComp)
+							if jobComp == nil {
+								log.Println("failed to find job component")
+							} else {
+								jobComp.ClaimedByID = 0
 
-							w.AddEntities(&entities.Job{
-								Job: *jobComp,
-							})
+								w.AddEntities(&entities.Job{
+									Job: *jobComp,
+								})
 
-							w.RemoveEntity(job)
+								w.RemoveEntity(job)
+							}
 						}
 					}
 
@@ -152,7 +155,7 @@ func (p *Pathfinder) Update(w engine.World) {
 
 func (p Pathfinder) GetPath(startPos components.Position, endPos components.Position, grids map[int]*paths.Grid, tileByType map[enums.TileTypeEnum][]components.Position) []components.Path {
 	if startPos.Z == endPos.Z {
-		path := grids[endPos.Z].GetPath(float64(startPos.X)*assets.CellSize, float64(startPos.Y)*assets.CellSize, float64(endPos.X)*assets.CellSize, float64(endPos.Y)*assets.CellSize, true, false)
+		path := grids[endPos.Z].GetPath(float64(startPos.X*assets.CellSize), float64(startPos.Y*assets.CellSize), float64(endPos.X*assets.CellSize), float64(endPos.Y*assets.CellSize), true, false)
 
 		if path != nil && len(path.Cells) > 0 {
 			return []components.Path{
@@ -180,7 +183,7 @@ func (p Pathfinder) GetPath(startPos components.Position, endPos components.Posi
 	var reached bool
 	// Find route to each stair from current location, checking if each can get to final destination
 	for _, tt := range travTiles[direction] {
-		path := grids[startPos.Z].GetPath(float64(startPos.X)*assets.CellSize, float64(startPos.Y)*assets.CellSize, float64(tt.X)*assets.CellSize, float64(tt.Y)*assets.CellSize, true, false)
+		path := grids[startPos.Z].GetPath(float64(startPos.X*assets.CellSize), float64(startPos.Y*assets.CellSize), float64(tt.X*assets.CellSize), float64(tt.Y*assets.CellSize), true, false)
 
 		if path == nil {
 			continue
@@ -212,7 +215,7 @@ func (p Pathfinder) GetPath(startPos components.Position, endPos components.Posi
 func (p Pathfinder) traverseLevel(paths []components.Path, travTiles []components.Position, direction bool, startPos, finalDest components.Position, grids map[int]*paths.Grid) ([]components.Path, bool) {
 	// First thing to try is if we can reach final destination
 	if startPos.Z == finalDest.Z {
-		path := grids[finalDest.Z].GetPath(float64(startPos.X)*assets.CellSize, float64(startPos.Y)*assets.CellSize, float64(finalDest.X)*assets.CellSize, float64(finalDest.Y)*assets.CellSize, true, false)
+		path := grids[finalDest.Z].GetPath(float64(startPos.X*assets.CellSize), float64(startPos.Y*assets.CellSize), float64(finalDest.X*assets.CellSize), float64(finalDest.Y*assets.CellSize), true, false)
 
 		if path != nil {
 			paths = append(paths, components.Path{
@@ -225,7 +228,7 @@ func (p Pathfinder) traverseLevel(paths []components.Path, travTiles []component
 
 	for _, tt := range travTiles {
 		if tt.Z == startPos.Z {
-			path := grids[startPos.Z].GetPath(float64(startPos.X)*assets.CellSize, float64(startPos.Y)*assets.CellSize, float64(tt.X)*assets.CellSize, float64(tt.Y)*assets.CellSize, true, false)
+			path := grids[startPos.Z].GetPath(float64(startPos.X*assets.CellSize), float64(startPos.Y*assets.CellSize), float64(tt.X*assets.CellSize), float64(tt.Y*assets.CellSize), true, false)
 
 			if path != nil {
 				paths = append(paths, components.Path{
